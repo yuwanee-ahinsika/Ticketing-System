@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark .glass-panel {
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .glass-card {
+    background: rgba(30, 41, 59, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .dark .glass-card:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(99, 102, 241, 0.4); /* Indigo glow on hover */
+  }
+
+  .glow-open {
+    box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.3);
+  }
+  
+  .glow-progress {
+    box-shadow: 0 0 15px -3px rgba(59, 130, 246, 0.3);
+  }
+  
+  .glow-resolved {
+    box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.3);
+  }
+}
+
