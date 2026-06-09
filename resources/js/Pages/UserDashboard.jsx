@@ -392,7 +392,7 @@ export default function UserDashboard({ platforms = [], tickets = [] }) {
                                                 </p>
                                                 {ticket.replies?.length > 0 && (
                                                     <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/50 flex items-center space-x-2 text-xs text-slate-400 dark:text-slate-500">
-                                                        <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                                         </svg>
                                                         <span>{ticket.replies.length} replies • Last: {formatDate(ticket.replies[ticket.replies.length - 1].created_at)}</span>
@@ -452,9 +452,7 @@ export default function UserDashboard({ platforms = [], tickets = [] }) {
                                         <div className="flex-1 space-y-4 overflow-y-auto pr-1">
                                             {selectedTicket.replies?.length === 0 ? (
                                                 <div className="h-full flex flex-col justify-center items-center text-slate-500 dark:text-slate-400 space-y-2">
-                                                    <svg className="h-10 w-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                                    </svg>
+                                                    
                                                     <p className="text-sm">No replies yet. The IT department will view your issue soon.</p>
                                                 </div>
                                             ) : (
@@ -471,7 +469,7 @@ export default function UserDashboard({ platforms = [], tickets = [] }) {
                                                         >
                                                             <div className="flex justify-between items-center gap-4 mb-1 border-b border-white/10 pb-0.5">
                                                                 <span className="text-xs font-extrabold uppercase tracking-wide">
-                                                                    {reply.user?.name} {isITReply && <span className="ml-1 bg-indigo-500 text-[10px] text-white px-1.5 py-0.5 rounded">IT Staff</span>}
+                                                                    {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-indigo-500 text-[10px] text-white px-1.5 py-0.5 rounded">IT Staff</span>}
                                                                 </span>
                                                                 <span className={`text-[10px] ${isITReply ? 'text-slate-400 dark:text-slate-400' : 'text-indigo-200'}`}>
                                                                     {formatDate(reply.created_at)}

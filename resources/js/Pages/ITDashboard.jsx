@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 // Platform Icons helper component (matches UserDashboard)
@@ -44,12 +44,58 @@ const PlatformIcon = ({ name, className }) => {
     }
 };
 
-export default function ITDashboard({ tickets = [] }) {
+export default function ITDashboard({ tickets = [], platforms = [] }) {
+    const [activeTab, setActiveTab] = useState('queue'); // 'queue' or 'new-ticket'
+    const [selectedPlatform, setSelectedPlatform] = useState(null);
+    const [selectedCommonIssue, setSelectedCommonIssue] = useState(null);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [statusFilter, setStatusFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [replyMessage, setReplyMessage] = useState('');
     const [updateStatusVal, setUpdateStatusVal] = useState('');
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        platform_id: '',
+        common_issue_id: '',
+        title: '',
+        description: '',
+    });
+
+    // Handle selecting a platform card
+    const handlePlatformSelect = (platform) => {
+        setSelectedPlatform(platform);
+        setSelectedCommonIssue(null);
+        setData(prev => ({
+            ...prev,
+            platform_id: platform.id,
+            common_issue_id: '',
+            title: '',
+        }));
+    };
+
+    // Handle selecting a common issue
+    const handleIssueSelect = (issue) => {
+        setSelectedCommonIssue(issue);
+        setData(prev => ({
+            ...prev,
+            common_issue_id: issue ? issue.id : '',
+            title: issue ? issue.title : '',
+            description: issue ? issue.description : '',
+        }));
+    };
+
+    // Submit a ticket
+    const handleSubmitTicket = (e) => {
+        e.preventDefault();
+        post(route('tickets.store'), {
+            onSuccess: () => {
+                reset();
+                setSelectedPlatform(null);
+                setSelectedCommonIssue(null);
+                setActiveTab('queue');
+            }
+        });
+    };
 
     // Metrics calculations
     const totalTickets = tickets.length;
@@ -130,289 +176,473 @@ export default function ITDashboard({ tickets = [] }) {
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-bold leading-tight text-slate-800 dark:text-slate-100">
-                    IT Service Desk Dashboard
-                </h2>
+                <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-bold leading-tight text-slate-800 dark:text-slate-100">
+                        IT Service Desk Dashboard
+                    </h2>
+                    <div className="flex space-x-1 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/50">
+                        <button
+                            onClick={() => { setActiveTab('queue'); setSelectedTicket(null); }}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                                activeTab === 'queue'
+                                    ? 'bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                            }`}
+                        >
+                            Tickets Queue ({tickets.length})
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab('new-ticket'); setSelectedTicket(null); }}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                                activeTab === 'new-ticket'
+                                    ? 'bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm'
+                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                            }`}
+                        >
+                            Submit Ticket
+                        </button>
+                    </div>
+                </div>
             }
         >
             <Head title="IT Service Desk" />
 
             <div className="py-6 text-slate-900 dark:text-slate-100">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
-                    {/* STATS BANNER */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between">
-                            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Queue</span>
-                            <span className="text-3xl font-extrabold mt-2 text-slate-800 dark:text-slate-100">{totalTickets}</span>
-                        </div>
-                        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-amber-500/50">
-                            <span className="text-sm font-semibold text-amber-500">Unassigned / Open</span>
-                            <span className="text-3xl font-extrabold mt-2 text-amber-600 dark:text-amber-550">{openTickets}</span>
-                        </div>
-                        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-blue-500/50">
-                            <span className="text-sm font-semibold text-blue-450 dark:text-blue-400">In Progress</span>
-                            <span className="text-3xl font-extrabold mt-2 text-blue-500">{progressTickets}</span>
-                        </div>
-                        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-emerald-500/50">
-                            <span className="text-sm font-semibold text-emerald-500">Resolved</span>
-                            <span className="text-3xl font-extrabold mt-2 text-emerald-600 dark:text-emerald-500">{resolvedTickets}</span>
-                        </div>
-                    </div>
-
-                    {/* MAIN SPLIT-VIEW CONTROLLER */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                        {/* LEFT: Ticket Queue List & Filters */}
-                        <div className={`${selectedTicket ? 'hidden lg:block lg:col-span-1' : 'lg:col-span-3'} space-y-4`}>
-                            {/* SEARCH AND FILTERS */}
-                            <div className="glass-panel p-5 rounded-2xl space-y-4">
-                                <div className="text-left">
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                                        Search tickets
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Search title, desc, user, platform..."
-                                        className="w-full text-sm rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                                    />
+                    {/* QUEUE TAB */}
+                    {activeTab === 'queue' && (
+                        <>
+                            {/* STATS BANNER */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between">
+                                    <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Queue</span>
+                                    <span className="text-3xl font-extrabold mt-2 text-slate-800 dark:text-slate-100">{totalTickets}</span>
                                 </div>
-                                <div className="text-left">
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                                        Filter by Status
-                                    </label>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {['all', 'open', 'in_progress', 'resolved', 'closed'].map((status) => (
+                                <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-amber-500/50">
+                                    <span className="text-sm font-semibold text-amber-500">Unassigned / Open</span>
+                                    <span className="text-3xl font-extrabold mt-2 text-amber-600 dark:text-amber-555">{openTickets}</span>
+                                </div>
+                                <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-blue-500/50">
+                                    <span className="text-sm font-semibold text-blue-450 dark:text-blue-400">In Progress</span>
+                                    <span className="text-3xl font-extrabold mt-2 text-blue-500">{progressTickets}</span>
+                                </div>
+                                <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border-l-4 border-l-emerald-500/50">
+                                    <span className="text-sm font-semibold text-emerald-500">Resolved</span>
+                                    <span className="text-3xl font-extrabold mt-2 text-emerald-600 dark:text-emerald-555">{resolvedTickets}</span>
+                                </div>
+                            </div>
+
+                            {/* MAIN SPLIT-VIEW CONTROLLER */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                                {/* LEFT: Ticket Queue List & Filters */}
+                                <div className={`${selectedTicket ? 'hidden lg:block lg:col-span-1' : 'lg:col-span-3'} space-y-4`}>
+                                    {/* SEARCH AND FILTERS */}
+                                    <div className="glass-panel p-5 rounded-2xl space-y-4">
+                                        <div className="text-left">
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                                Search tickets
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                placeholder="Search title, desc, user, platform..."
+                                                className="w-full text-sm rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                                            />
+                                        </div>
+                                        <div className="text-left">
+                                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                                                Filter by Status
+                                            </label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {['all', 'open', 'in_progress', 'resolved', 'closed'].map((status) => (
+                                                    <button
+                                                        key={status}
+                                                        onClick={() => setStatusFilter(status)}
+                                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${
+                                                            statusFilter === status
+                                                                ? 'bg-indigo-600 border-indigo-700 text-white shadow-sm'
+                                                                : 'bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                                                        }`}
+                                                    >
+                                                        {status === 'all' ? 'All' : status.replace('_', ' ')}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* TICKET ITEMS */}
+                                    <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                                        {filteredTickets.length === 0 ? (
+                                            <div className="glass-panel p-8 text-center rounded-2xl text-slate-500">
+                                                No tickets found in queue.
+                                            </div>
+                                        ) : (
+                                            filteredTickets.map((ticket) => (
+                                                <div
+                                                    key={ticket.id}
+                                                    onClick={() => setSelectedTicket(ticket)}
+                                                    className={`p-5 rounded-2xl text-left border cursor-pointer transition-all duration-300 relative ${
+                                                        selectedTicket?.id === ticket.id
+                                                            ? 'bg-indigo-500/5 dark:bg-indigo-500/10 border-indigo-500/40'
+                                                            : 'glass-card border-slate-200 dark:border-slate-700/40'
+                                                    }`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-2.5">
+                                                        <span className={`text-xs uppercase font-extrabold px-3 py-1 rounded-full leading-none tracking-wider ${getStatusBadge(ticket.status)}`}>
+                                                            {ticket.status.replace('_', ' ')}
+                                                        </span>
+                                                        <span className="text-xs text-slate-400 dark:text-slate-500">
+                                                            {formatDate(ticket.created_at)}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base line-clamp-1 mb-1.5">
+                                                        {ticket.title}
+                                                    </h4>
+                                                    <div className="flex items-center justify-between text-xs font-semibold text-slate-400 dark:text-slate-500 mb-2">
+                                                        <span className="text-indigo-500 dark:text-indigo-400">{ticket.platform?.name}</span>
+                                                        <span className="text-slate-750 dark:text-slate-355 font-bold">By: {ticket.user?.name}</span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
+                                                        {ticket.description}
+                                                    </p>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* RIGHT: Ticket Conversation & Solutions */}
+                                {selectedTicket && (
+                                    <div className="lg:col-span-2 space-y-4 animate-slideIn">
+                                        {/* Details Header */}
+                                        <div className="glass-panel p-6 rounded-2xl text-left">
                                             <button
-                                                key={status}
-                                                onClick={() => setStatusFilter(status)}
-                                                className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${
-                                                    statusFilter === status
-                                                        ? 'bg-indigo-600 border-indigo-750 text-white shadow-sm'
-                                                        : 'bg-white dark:bg-slate-900/40 border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40'
-                                                }`}
+                                                onClick={() => setSelectedTicket(null)}
+                                                className="lg:hidden text-xs font-semibold text-indigo-500 dark:text-indigo-400 flex items-center mb-4 hover:underline"
                                             >
-                                                {status === 'all' ? 'All' : status.replace('_', ' ')}
+                                                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7 7-7" />
+                                                </svg>
+                                                Back to list
                                             </button>
+
+                                            <div className="flex flex-wrap justify-between items-start gap-4 mb-4 pb-4 border-b border-slate-200 dark:border-slate-800/80">
+                                                <div>
+                                                    <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">
+                                                        SUBMITTED BY
+                                                    </span>
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="font-bold text-slate-800 dark:text-slate-100 text-base">
+                                                            {selectedTicket.user?.name}
+                                                        </span>
+                                                        {selectedTicket.user?.employee?.employee_code && (
+                                                            <span className="text-xs bg-slate-150 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700/60 font-mono font-bold">
+                                                                {selectedTicket.user.employee.employee_code}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs text-slate-405 dark:text-slate-450 mt-1 space-y-0.5">
+                                                        <div>Email: {selectedTicket.user?.email}</div>
+                                                        {selectedTicket.user?.department?.name && (
+                                                            <div>Department: <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedTicket.user.department.name}</span></div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">
+                                                        CREATED ON
+                                                    </span>
+                                                    <span className="font-semibold text-slate-700 dark:text-slate-355 text-sm">
+                                                        {formatDate(selectedTicket.created_at)}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Bar for status changes */}
+                                            <div className="mb-6 flex flex-wrap items-center gap-3">
+                                                <span className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-555 mr-2">
+                                                    Quick Actions:
+                                                </span>
+                                                <button
+                                                    onClick={() => handleUpdateStatusDirectly('in_progress')}
+                                                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                >
+                                                    In Progress
+                                                </button>
+                                                <button
+                                                    onClick={() => handleUpdateStatusDirectly('resolved')}
+                                                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-450 border border-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                >
+                                                    Mark Resolved
+                                                </button>
+                                                <button
+                                                    onClick={() => handleUpdateStatusDirectly('closed')}
+                                                    className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-500/10 hover:bg-slate-500/20 text-slate-400 border border-slate-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                                >
+                                                    Close Ticket
+                                                </button>
+                                            </div>
+
+                                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                                                {selectedTicket.title}
+                                            </h3>
+                                            <div className="flex items-center space-x-2 text-sm text-indigo-500 dark:text-indigo-400 font-semibold mt-1">
+                                                <PlatformIcon name={selectedTicket.platform?.name} className="h-4 w-4" />
+                                                <span>Platform: {selectedTicket.platform?.name}</span>
+                                                {selectedTicket.common_issue && (
+                                                    <>
+                                                        <span className="text-slate-350 dark:text-slate-750">•</span>
+                                                        <span>Issue Template: {selectedTicket.common_issue?.title}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/40 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
+                                                {selectedTicket.description}
+                                            </div>
+                                        </div>
+
+                                        {/* Chat logs */}
+                                        <div className="glass-panel p-6 rounded-2xl flex flex-col space-y-4 h-[350px] overflow-y-auto">
+                                            <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm border-b border-slate-200 dark:border-slate-850 pb-2 text-left">
+                                                Conversation Activity Thread
+                                            </h4>
+                                            <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+                                                {selectedTicket.replies?.length === 0 ? (
+                                                    <div className="h-full flex flex-col justify-center items-center text-slate-500 space-y-2">
+                                                        
+                                                        <p className="text-sm">No solutions or messages posted yet.</p>
+                                                    </div>
+                                                ) : (
+                                                    selectedTicket.replies.map((reply) => {
+                                                        const isITReply = reply.user?.role === 'it' || reply.user?.role === 'admin';
+                                                        return (
+                                                            <div
+                                                                key={reply.id}
+                                                                className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left border ${
+                                                                    isITReply
+                                                                        ? 'ml-auto bg-indigo-600 text-white border-indigo-700 rounded-tr-none'
+                                                                        : 'mr-auto bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 rounded-tl-none'
+                                                                }`}
+                                                            >
+                                                                <div className="flex justify-between items-center gap-4 mb-1 border-b border-white/10 pb-0.5">
+                                                                    <span className="text-xs font-extrabold uppercase tracking-wide">
+                                                                        {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-indigo-500 text-[10px] text-white px-1.5 py-0.5 rounded">IT Agent (You)</span>}
+                                                                    </span>
+                                                                    <span className={`text-[10px] ${isITReply ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-400'}`}>
+                                                                        {formatDate(reply.created_at)}
+                                                                    </span>
+                                                                </div>
+                                                                <p className="text-sm leading-relaxed whitespace-pre-wrap mt-1">
+                                                                    {reply.message}
+                                                                </p>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Reply panel with optional status transition */}
+                                        {selectedTicket.status !== 'closed' && (
+                                            <form onSubmit={handlePostReply} className="glass-panel p-5 rounded-2xl space-y-4">
+                                                <div className="text-left">
+                                                    <textarea
+                                                        rows={3}
+                                                        value={replyMessage}
+                                                        onChange={(e) => setReplyMessage(e.target.value)}
+                                                        placeholder="Write support solution or ask clarifying details..."
+                                                        className="w-full rounded-xl border-slate-350 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 py-2.5 px-3.5"
+                                                    />
+                                                </div>
+                                                <div className="flex flex-wrap justify-between items-center gap-4 text-left">
+                                                    <div className="flex items-center space-x-2">
+                                                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                            Update Status:
+                                                        </span>
+                                                        <select
+                                                            value={updateStatusVal}
+                                                            onChange={(e) => setUpdateStatusVal(e.target.value)}
+                                                            className="text-xs rounded-lg border-slate-300 dark:border-slate-750 bg-white dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 focus:ring-indigo-500 focus:border-indigo-500"
+                                                        >
+                                                            <option value="">Keep current state</option>
+                                                            <option value="in_progress">In Progress</option>
+                                                            <option value="resolved">Resolved</option>
+                                                            <option value="closed">Closed</option>
+                                                        </select>
+                                                    </div>
+                                                    <button
+                                                        type="submit"
+                                                        className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                                                    >
+                                                        Publish Reply
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {/* SUBMIT TICKET TAB */}
+                    {activeTab === 'new-ticket' && (
+                        <div className="space-y-8 animate-fadeIn">
+                            {/* Step 1: Select Platform */}
+                            {!selectedPlatform ? (
+                                <div className="space-y-4">
+                                    <div className="border-b border-slate-200 dark:border-slate-700/50 pb-2 text-left">
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                                            Step 1: Select the platform having the issue
+                                        </h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                            Choose the application, department service, or device where the problem is occurring.
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {platforms.map((platform) => (
+                                            <div
+                                                key={platform.id}
+                                                onClick={() => handlePlatformSelect(platform)}
+                                                className="glass-card cursor-pointer p-6 rounded-2xl flex flex-col justify-between h-48 group text-left"
+                                            >
+                                                <div>
+                                                    <div className="p-3 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 rounded-xl w-fit group-hover:bg-indigo-500/20 transition-all duration-300">
+                                                        <PlatformIcon name={platform.name} className="h-6 w-6" />
+                                                    </div>
+                                                    <h4 className="text-lg font-bold mt-4 text-slate-800 dark:text-slate-100">
+                                                        {platform.name}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                                                        {platform.description}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center text-sm font-semibold text-indigo-500 dark:text-indigo-400 mt-2">
+                                                    Report an issue
+                                                    <svg className="h-4 w-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* TICKET ITEMS */}
-                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-                                {filteredTickets.length === 0 ? (
-                                    <div className="glass-panel p-8 text-center rounded-2xl text-slate-500">
-                                        No tickets found in queue.
-                                    </div>
-                                ) : (
-                                    filteredTickets.map((ticket) => (
-                                        <div
-                                            key={ticket.id}
-                                            onClick={() => setSelectedTicket(ticket)}
-                                            className={`p-5 rounded-2xl text-left border cursor-pointer transition-all duration-300 relative ${
-                                                selectedTicket?.id === ticket.id
-                                                    ? 'bg-indigo-500/5 dark:bg-indigo-500/10 border-indigo-500/40'
-                                                    : 'glass-card border-slate-200 dark:border-slate-700/40'
-                                            }`}
-                                        >
-                                            <div className="flex justify-between items-start mb-2.5">
-                                                <span className={`text-xs uppercase font-extrabold px-3 py-1 rounded-full leading-none tracking-wider ${getStatusBadge(ticket.status)}`}>
-                                                    {ticket.status.replace('_', ' ')}
-                                                </span>
-                                                <span className="text-xs text-slate-400 dark:text-slate-500">
-                                                    {formatDate(ticket.created_at)}
-                                                </span>
-                                            </div>
-                                            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base line-clamp-1 mb-1.5">
-                                                {ticket.title}
-                                            </h4>
-                                            <div className="flex items-center justify-between text-xs font-semibold text-slate-400 dark:text-slate-500 mb-2">
-                                                <span className="text-indigo-500 dark:text-indigo-400">{ticket.platform?.name}</span>
-                                                <span className="text-slate-750 dark:text-slate-355 font-bold">By: {ticket.user?.name}</span>
-                                            </div>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
-                                                {ticket.description}
-                                            </p>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        {/* RIGHT: Ticket Conversation & Solutions */}
-                        {selectedTicket && (
-                            <div className="lg:col-span-2 space-y-4 animate-slideIn">
-                                {/* Details Header */}
-                                <div className="glass-panel p-6 rounded-2xl text-left">
-                                    <button
-                                        onClick={() => setSelectedTicket(null)}
-                                        className="lg:hidden text-xs font-semibold text-indigo-500 dark:text-indigo-400 flex items-center mb-4 hover:underline"
-                                    >
-                                        <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7 7-7" />
-                                        </svg>
-                                        Back to list
-                                    </button>
-
-                                    <div className="flex flex-wrap justify-between items-start gap-4 mb-4 pb-4 border-b border-slate-200 dark:border-slate-800/80">
-                                        <div>
-                                            <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">
-                                                SUBMITTED BY
-                                            </span>
-                                            <div className="flex items-center space-x-2">
-                                                <span className="font-bold text-slate-800 dark:text-slate-100 text-base">
-                                                    {selectedTicket.user?.name}
-                                                </span>
-                                                {selectedTicket.user?.employee?.employee_code && (
-                                                    <span className="text-xs bg-slate-150 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700/60 font-mono font-bold">
-                                                        {selectedTicket.user.employee.employee_code}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="text-xs text-slate-405 dark:text-slate-450 mt-1 space-y-0.5">
-                                                <div>Email: {selectedTicket.user?.email}</div>
-                                                {selectedTicket.user?.department?.name && (
-                                                    <div>Department: <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedTicket.user.department.name}</span></div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">
-                                                CREATED ON
-                                            </span>
-                                            <span className="font-semibold text-slate-700 dark:text-slate-350 text-sm">
-                                                {formatDate(selectedTicket.created_at)}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Action Bar for status changes */}
-                                    <div className="mb-6 flex flex-wrap items-center gap-3">
-                                        <span className="text-xs font-extrabold uppercase tracking-wide text-slate-400 dark:text-slate-550 mr-2">
-                                            Quick Actions:
-                                        </span>
-                                        <button
-                                            onClick={() => handleUpdateStatusDirectly('in_progress')}
-                                            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                        >
-                                            In Progress
-                                        </button>
-                                        <button
-                                            onClick={() => handleUpdateStatusDirectly('resolved')}
-                                            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-450 border border-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                        >
-                                            Mark Resolved
-                                        </button>
-                                        <button
-                                            onClick={() => handleUpdateStatusDirectly('closed')}
-                                            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-500/10 hover:bg-slate-500/20 text-slate-400 border border-slate-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                        >
-                                            Close Ticket
-                                        </button>
-                                    </div>
-
-                                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                                        {selectedTicket.title}
-                                    </h3>
-                                    <div className="flex items-center space-x-2 text-sm text-indigo-500 dark:text-indigo-400 font-semibold mt-1">
-                                        <PlatformIcon name={selectedTicket.platform?.name} className="h-4 w-4" />
-                                        <span>Platform: {selectedTicket.platform?.name}</span>
-                                        {selectedTicket.common_issue && (
-                                            <>
-                                                <span className="text-slate-350 dark:text-slate-750">•</span>
-                                                <span>Issue Template: {selectedTicket.common_issue?.title}</span>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/40 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">
-                                        {selectedTicket.description}
-                                    </div>
-                                </div>
-
-                                {/* Chat logs */}
-                                <div className="glass-panel p-6 rounded-2xl flex flex-col space-y-4 h-[350px] overflow-y-auto">
-                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm border-b border-slate-200 dark:border-slate-850 pb-2 text-left">
-                                        Conversation Activity Thread
-                                    </h4>
-                                    <div className="flex-1 space-y-4 overflow-y-auto pr-1">
-                                        {selectedTicket.replies?.length === 0 ? (
-                                            <div className="h-full flex flex-col justify-center items-center text-slate-500 space-y-2">
-                                                <svg className="h-10 w-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            ) : (
+                                /* Platform selected flow */
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                                    {/* Left pane: Selected Platform & Common Issues list */}
+                                    <div className="lg:col-span-1 space-y-6">
+                                        <div className="glass-panel p-6 rounded-2xl space-y-4">
+                                            <button
+                                                onClick={() => setSelectedPlatform(null)}
+                                                className="text-sm font-semibold text-indigo-500 dark:text-indigo-400 flex items-center hover:underline"
+                                            >
+                                                <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7 7-7" />
                                                 </svg>
-                                                <p className="text-sm">No solutions or messages posted yet.</p>
+                                                Back to platforms
+                                            </button>
+                                            <div className="flex items-center space-x-3 border-t border-slate-200 dark:border-slate-700/50 pt-4 text-left">
+                                                <div className="p-2.5 bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 rounded-lg">
+                                                    <PlatformIcon name={selectedPlatform.name} className="h-5 w-5" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-slate-800 dark:text-slate-250 text-base">{selectedPlatform.name}</h3>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{selectedPlatform.description}</p>
+                                                </div>
                                             </div>
-                                        ) : (
-                                            selectedTicket.replies.map((reply) => {
-                                                const isITReply = reply.user?.role === 'it' || reply.user?.role === 'admin';
-                                                return (
+                                        </div>
+
+                                        <div className="glass-panel p-6 rounded-2xl space-y-4">
+                                            <h4 className="font-bold text-slate-850 dark:text-slate-100 text-sm text-left">
+                                                Select standard issue type
+                                            </h4>
+                                            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                                                <div
+                                                    onClick={() => handleIssueSelect(null)}
+                                                    className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${
+                                                        selectedCommonIssue === null
+                                                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500 dark:text-indigo-400 font-semibold'
+                                                            : 'border-slate-200 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
+                                                    }`}
+                                                >
+                                                    Write a custom issue...
+                                                </div>
+                                                {selectedPlatform.common_issues?.map((issue) => (
                                                     <div
-                                                        key={reply.id}
-                                                        className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left border ${
-                                                            isITReply
-                                                                ? 'ml-auto bg-indigo-650 text-white border-indigo-750 rounded-tr-none'
-                                                                : 'mr-auto bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 rounded-tl-none'
+                                                        key={issue.id}
+                                                        onClick={() => handleIssueSelect(issue)}
+                                                        className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${
+                                                            selectedCommonIssue?.id === issue.id
+                                                                ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-500 dark:text-indigo-400 font-semibold'
+                                                                : 'border-slate-200 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                                                         }`}
                                                     >
-                                                        <div className="flex justify-between items-center gap-4 mb-1 border-b border-white/10 pb-0.5">
-                                                            <span className="text-xs font-extrabold uppercase tracking-wide">
-                                                                {reply.user?.name} {isITReply && <span className="ml-1 bg-indigo-550 text-[10px] text-white px-1.5 py-0.5 rounded">IT Agent (You)</span>}
-                                                            </span>
-                                                            <span className={`text-[10px] ${isITReply ? 'text-indigo-200' : 'text-slate-400 dark:text-slate-400'}`}>
-                                                                {formatDate(reply.created_at)}
-                                                            </span>
+                                                        <div className="font-bold">{issue.title}</div>
+                                                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 font-normal">
+                                                            {issue.description}
                                                         </div>
-                                                        <p className="text-sm leading-relaxed whitespace-pre-wrap mt-1">
-                                                            {reply.message}
-                                                        </p>
                                                     </div>
-                                                );
-                                            })
-                                        )}
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right pane: Submission Form */}
+                                    <div className="lg:col-span-2">
+                                        <div className="glass-panel p-8 rounded-2xl">
+                                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-6 text-left">
+                                                Submit Issue Details
+                                            </h3>
+
+                                            <form onSubmit={handleSubmitTicket} className="space-y-6">
+                                                <div className="text-left">
+                                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                                        Issue Summary / Title
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={data.title}
+                                                        onChange={(e) => setData('title', e.target.value)}
+                                                        disabled={selectedCommonIssue !== null}
+                                                        placeholder="Provide a clear, brief summary of the problem"
+                                                        className="w-full rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-60 disabled:bg-slate-100 dark:disabled:bg-slate-800/80 transition-all duration-200"
+                                                    />
+                                                    {errors.title && <span className="text-rose-500 text-xs mt-1 block">{errors.title}</span>}
+                                                </div>
+
+                                                <div className="text-left">
+                                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                                                        Detailed Description
+                                                    </label>
+                                                    <textarea
+                                                        rows={6}
+                                                        value={data.description}
+                                                        onChange={(e) => setData('description', e.target.value)}
+                                                        placeholder="Describe exactly what happened, step by step. Mention any error messages seen, and what actions you were trying to do."
+                                                        className="w-full rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                                                    />
+                                                    {errors.description && <span className="text-rose-500 text-xs mt-1 block">{errors.description}</span>}
+                                                </div>
+
+                                                <div className="flex justify-end pt-4">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={processing}
+                                                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 transition-all duration-200 flex items-center space-x-2"
+                                                    >
+                                                        {processing ? 'Submitting...' : 'Submit Support Ticket'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Reply panel with optional status transition */}
-                                {selectedTicket.status !== 'closed' && (
-                                    <form onSubmit={handlePostReply} className="glass-panel p-5 rounded-2xl space-y-4">
-                                        <div className="text-left">
-                                            <textarea
-                                                rows={3}
-                                                value={replyMessage}
-                                                onChange={(e) => setReplyMessage(e.target.value)}
-                                                placeholder="Write support solution or ask clarifying details..."
-                                                className="w-full rounded-xl border-slate-350 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 py-2.5 px-3.5"
-                                            />
-                                        </div>
-                                        <div className="flex flex-wrap justify-between items-center gap-4 text-left">
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                                                    Update Status:
-                                                </span>
-                                                <select
-                                                    value={updateStatusVal}
-                                                    onChange={(e) => setUpdateStatusVal(e.target.value)}
-                                                    className="text-xs rounded-lg border-slate-300 dark:border-slate-750 bg-white dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 focus:ring-indigo-500 focus:border-indigo-500"
-                                                >
-                                                    <option value="">Keep current state</option>
-                                                    <option value="in_progress">In Progress</option>
-                                                    <option value="resolved">Resolved</option>
-                                                    <option value="closed">Closed</option>
-                                                </select>
-                                            </div>
-                                            <button
-                                                type="submit"
-                                                className="px-6 py-2.5 bg-indigo-650 hover:bg-indigo-600 text-white font-semibold rounded-xl text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                                            >
-                                                Publish Reply
-                                            </button>
-                                        </div>
-                                    </form>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

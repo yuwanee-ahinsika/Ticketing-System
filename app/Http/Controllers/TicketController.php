@@ -24,9 +24,11 @@ class TicketController extends Controller
             $tickets = Ticket::with(['user.employee', 'user.department', 'platform', 'commonIssue', 'replies.user'])
                 ->latest()
                 ->get();
+            $platforms = Platform::with('commonIssues')->get();
 
             return Inertia::render('ITDashboard', [
                 'tickets' => $tickets,
+                'platforms' => $platforms,
             ]);
         }
 

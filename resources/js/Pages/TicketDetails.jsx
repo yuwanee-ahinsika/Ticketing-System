@@ -186,7 +186,7 @@ export default function TicketDetails({ ticket }) {
                                         >
                                             <div className="flex justify-between items-center gap-4 mb-1 border-b border-white/10 pb-0.5">
                                                 <span className="text-xs font-extrabold uppercase tracking-wide">
-                                                    {reply.user?.name} {isITReply && <span className="ml-1 bg-indigo-550 text-[10px] text-white px-1.5 py-0.5 rounded">IT Support</span>}
+                                                    {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-indigo-500 text-[10px] text-white px-1.5 py-0.5 rounded">IT Support</span>}
                                                 </span>
                                                 <span className={`text-[10px] ${isITReply ? 'text-slate-400 dark:text-slate-400' : 'text-indigo-200'}`}>
                                                     {formatDate(reply.created_at)}

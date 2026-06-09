@@ -26,6 +26,15 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'department_name',
+    ];
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
@@ -58,7 +67,26 @@ class User extends Authenticatable
             return true;
         }
 
-        // 2. Check by department (department named 'IT')
+        // 2. Check by department assignment in employee_job table via employee_id
+        if ($this->employee_id) {
+            $itDepartmentId = \Illuminate\Support\Facades\Cache::remember('it_department_id', 3600, function () {
+                return \Illuminate\Support\Facades\DB::table('departments')
+                    ->where('name', 'IT')
+                    ->value('department_id');
+            });
+
+            if ($itDepartmentId) {
+                $userDeptId = \Illuminate\Support\Facades\DB::table('employee_job')
+                    ->where('employee_id', $this->employee_id)
+                    ->value('department_id');
+
+                if ($userDeptId && (int)$userDeptId === (int)$itDepartmentId) {
+                    return true;
+                }
+            }
+        }
+
+        // 3. Fallback: Check direct department_id field in users table
         if ($this->department_id) {
             $itDepartmentId = \Illuminate\Support\Facades\Cache::remember('it_department_id', 3600, function () {
                 return \Illuminate\Support\Facades\DB::table('departments')
@@ -101,5 +129,47 @@ class User extends Authenticatable
     public function department()
     {
         return $this->belongsTo(Department::class, 'department_id', 'department_id');
+    }
+
+    /**
+     * Get the department name.
+     */
+    public function getDepartmentNameAttribute(): string
+    {
+        if ($this->role === 'it' || $this->role === 'admin') {
+            return 'IT';
+        }
+
+        if ($this->employee_id) {
+            $deptId = \Illuminate\Support\Facades\Cache::remember('user_dept_id_' . $this->id, 3600, function () {
+                return \Illuminate\Support\Facades\DB::table('employee_job')
+                    ->where('employee_id', $this->employee_id)
+                    ->value('department_id');
+            });
+
+            if ($deptId) {
+                $name = \Illuminate\Support\Facades\Cache::remember('dept_name_' . $deptId, 3600, function () use ($deptId) {
+                    return \Illuminate\Support\Facades\DB::table('departments')
+                        ->where('department_id', $deptId)
+                        ->value('name');
+                });
+                if ($name) {
+                    return $name;
+                }
+            }
+        }
+
+        if ($this->department_id) {
+            $name = \Illuminate\Support\Facades\Cache::remember('dept_name_' . $this->department_id, 3600, function () {
+                return \Illuminate\Support\Facades\DB::table('departments')
+                    ->where('department_id', $this->department_id)
+                    ->value('name');
+            });
+            if ($name) {
+                return $name;
+            }
+        }
+
+        return 'User';
     }
 }
