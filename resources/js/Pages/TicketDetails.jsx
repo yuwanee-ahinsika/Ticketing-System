@@ -35,6 +35,14 @@ const PlatformIcon = ({ name, className }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
             );
+        case 'Other':
+            return (
+                <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="10" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+            );
         default:
             return (
                 <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -44,9 +52,30 @@ const PlatformIcon = ({ name, className }) => {
     }
 };
 
+// Date formatter
+const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
+// Status badge helper
+const getStatusBadge = (status) => {
+    switch (status) {
+        case 'open':
+            return 'bg-amber-500/10 text-amber-600 border border-amber-500/20';
+        case 'in_progress':
+            return 'bg-blue-500/10 text-blue-600 border border-blue-500/20';
+        case 'resolved':
+            return 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20';
+        case 'closed':
+            return 'bg-slate-105 text-slate-600 border border-slate-200';
+        default:
+            return 'bg-slate-105 text-slate-600 border border-slate-200';
+    }
+};
+
 export default function TicketDetails({ ticket, canReply = false }) {
     const [replyMessage, setReplyMessage] = useState('');
-    const [updateStatusVal, setUpdateStatusVal] = useState('');
 
     const handlePostReply = (e) => {
         e.preventDefault();
@@ -54,33 +83,12 @@ export default function TicketDetails({ ticket, canReply = false }) {
 
         router.post(route('tickets.replies.store', ticket.id), {
             message: replyMessage,
-            update_status: updateStatusVal || null
+            update_status: null
         }, {
             onSuccess: () => {
                 setReplyMessage('');
-                setUpdateStatusVal('');
             }
         });
-    };
-
-    const formatDate = (dateString) => {
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
-    };
-
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case 'open':
-                return 'bg-amber-500/10 text-amber-500 border border-amber-500/30 glow-open';
-            case 'in_progress':
-                return 'bg-blue-500/10 text-blue-400 border border-blue-500/30 glow-progress';
-            case 'resolved':
-                return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 glow-resolved';
-            case 'closed':
-                return 'bg-slate-500/10 text-slate-400 border border-slate-500/30';
-            default:
-                return 'bg-slate-500/10 text-slate-400 border border-slate-500/30';
-        }
     };
 
     return (
@@ -90,13 +98,13 @@ export default function TicketDetails({ ticket, canReply = false }) {
                     <div className="flex items-center space-x-3">
                         <Link
                             href={route('dashboard')}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/60 rounded-xl text-slate-650 dark:text-slate-350 transition-all duration-200"
+                            className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-all duration-200"
                         >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                             </svg>
                         </Link>
-                        <h2 className="text-xl font-bold leading-tight text-slate-800 dark:text-slate-100">
+                        <h2 className="text-xl font-bold leading-tight text-slate-800">
                             Ticket #{ticket.id}
                         </h2>
                     </div>
@@ -108,68 +116,68 @@ export default function TicketDetails({ ticket, canReply = false }) {
         >
             <Head title={`Ticket #${ticket.id} Details`} />
 
-            <div className="py-8 text-slate-900 dark:text-slate-100">
+            <div className="py-8 text-slate-850">
                 <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
                     {/* Ticket details summary */}
-                    <div className="glass-panel p-6 sm:p-8 rounded-2xl text-left space-y-4">
-                        <div className="flex flex-wrap justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+                    <div className="bg-white border border-slate-100 p-6 sm:p-8 rounded-2xl text-left space-y-4 shadow-sm">
+                        <div className="flex flex-wrap justify-between items-start gap-4 border-b border-slate-100 pb-4">
                             <div>
-                                <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">
+                                <span className="text-xs text-slate-400 block mb-0.5">
                                     CREATOR
                                 </span>
                                 <div className="flex items-center space-x-2">
-                                    <span className="font-bold text-slate-800 dark:text-slate-100 text-base">
+                                    <span className="font-bold text-slate-800 text-base">
                                         {ticket.user?.name}
                                     </span>
                                     {ticket.user?.employee?.employee_code && (
-                                        <span className="text-xs bg-slate-150 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700/60 font-mono font-bold">
+                                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 font-mono font-bold">
                                             {ticket.user.employee.employee_code}
                                         </span>
                                     )}
                                 </div>
-                                <div className="text-xs text-slate-405 dark:text-slate-450 mt-1 space-y-0.5">
+                                <div className="text-xs text-slate-450 mt-1 space-y-0.5">
                                     <div>Email: {ticket.user?.email}</div>
                                     {ticket.user?.department?.name && (
-                                        <div>Department: <span className="font-semibold text-slate-700 dark:text-slate-300">{ticket.user.department.name}</span></div>
+                                        <div>Department: <span className="font-semibold text-slate-700">{ticket.user.department.name}</span></div>
                                     )}
                                 </div>
                             </div>
                             <div className="sm:text-right">
-                                <span className="text-xs text-slate-400 dark:text-slate-500 block mb-1">
+                                <span className="text-xs text-slate-400 block mb-0.5">
                                     SUBMITTED AT
                                 </span>
-                                <span className="font-semibold text-slate-700 dark:text-slate-350 text-sm">
+                                <span className="font-semibold text-slate-705 text-sm">
                                     {formatDate(ticket.created_at)}
                                 </span>
                             </div>
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-2">
+                        <h3 className="text-xl font-bold text-slate-850 mt-2">
                             {ticket.title}
                         </h3>
-                        <div className="flex items-center space-x-2 text-sm text-indigo-500 dark:text-indigo-400 font-semibold">
+                        <div className="flex items-center space-x-2 text-sm text-indigo-500 font-semibold">
                             <PlatformIcon name={ticket.platform?.name} className="h-4 w-4" />
                             <span>Platform: {ticket.platform?.name}</span>
                             {ticket.common_issue && (
                                 <>
-                                    <span className="text-slate-350 dark:text-slate-750">•</span>
+                                    <span className="text-slate-300">•</span>
                                     <span>Template: {ticket.common_issue?.title}</span>
                                 </>
                             )}
                         </div>
-                        <div className="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/40 text-sm text-slate-755 dark:text-slate-300 whitespace-pre-wrap">
+                        <div className="mt-4 p-4.5 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                             {ticket.description}
                         </div>
                     </div>
 
                     {/* Chat log / Activity thread */}
-                    <div className="glass-panel p-6 rounded-2xl flex flex-col space-y-4 min-h-[300px]">
-                        <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm border-b border-slate-250 dark:border-slate-850 pb-2 text-left">
+                    <div className="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col space-y-4 min-h-[300px] shadow-sm">
+                        <h4 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2 text-left">
                             Activity Thread
                         </h4>
                         <div className="space-y-4">
                             {ticket.replies?.length === 0 ? (
-                                <div className="p-8 text-center text-slate-500">
+                                <div className="p-8 text-center text-slate-400 text-sm">
                                     No messages or replies have been posted to this ticket yet.
                                 </div>
                             ) : (
@@ -178,21 +186,23 @@ export default function TicketDetails({ ticket, canReply = false }) {
                                     return (
                                         <div
                                             key={reply.id}
-                                            className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left border ${
+                                            className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left shadow-sm ${
                                                 isITReply
-                                                    ? 'mr-auto bg-slate-150 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 rounded-tl-none text-slate-900 dark:text-slate-100'
-                                                    : 'ml-auto bg-indigo-600 text-white border-indigo-700 rounded-tr-none'
+                                                    ? 'mr-auto bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-none'
+                                                    : 'ml-auto bg-indigo-600 text-white rounded-tr-none'
                                             }`}
                                         >
-                                            <div className="flex justify-between items-center gap-4 mb-1 border-b border-white/10 pb-0.5">
-                                                <span className="text-xs font-extrabold uppercase tracking-wide">
-                                                    {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-indigo-500 text-[10px] text-white px-1.5 py-0.5 rounded">IT Support</span>}
+                                            <div className={`flex justify-between items-center gap-4 mb-1.5 border-b pb-1 text-[10px] ${
+                                                isITReply ? 'border-slate-200/55 text-slate-450' : 'border-white/10 text-indigo-100'
+                                            }`}>
+                                                <span className="font-extrabold uppercase tracking-wide">
+                                                    {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-slate-200/20 text-slate-700 px-1.5 py-0.2 rounded font-semibold text-[9px]">IT Support</span>}
                                                 </span>
-                                                <span className={`text-[10px] ${isITReply ? 'text-slate-400 dark:text-slate-400' : 'text-indigo-200'}`}>
+                                                <span className="font-medium">
                                                     {formatDate(reply.created_at)}
                                                 </span>
                                             </div>
-                                            <p className="text-sm leading-relaxed whitespace-pre-wrap mt-1">
+                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
                                                 {reply.message}
                                             </p>
                                         </div>
@@ -204,8 +214,8 @@ export default function TicketDetails({ ticket, canReply = false }) {
 
                     {/* Reply interface */}
                     {ticket.status !== 'closed' && canReply && (
-                        <form onSubmit={handlePostReply} className="glass-panel p-6 rounded-2xl space-y-4 text-left">
-                            <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                        <form onSubmit={handlePostReply} className="bg-white border border-slate-100 p-6 rounded-2xl space-y-4 text-left shadow-sm">
+                            <h4 className="font-bold text-slate-800 text-sm">
                                 Post message response
                             </h4>
                             <textarea
@@ -213,7 +223,7 @@ export default function TicketDetails({ ticket, canReply = false }) {
                                 value={replyMessage}
                                 onChange={(e) => setReplyMessage(e.target.value)}
                                 placeholder="Type details or response message here..."
-                                className="w-full rounded-xl border-slate-350 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 py-2.5 px-3.5"
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-850 text-sm focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-200 py-2.5 px-3.5"
                             />
                             <div className="flex flex-wrap justify-end items-center gap-4">
                                 <button
