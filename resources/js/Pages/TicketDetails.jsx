@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router, Link, usePage } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 
 // Platform Icons helper component (matches dashboards)
 const PlatformIcon = ({ name, className }) => {
@@ -76,6 +76,26 @@ const getStatusBadge = (status) => {
 
 export default function TicketDetails({ ticket, canReply = false }) {
     const [replyMessage, setReplyMessage] = useState('');
+    const user = usePage().props.auth.user;
+    const isITUser = user.role === 'it' || user.role === 'admin' || user.department_name === 'IT';
+    const isIT = (usr) => {
+        if (!usr) return false;
+        return usr.role === 'it' || usr.role === 'admin' || usr.department_name === 'IT';
+    };
+
+    const [seenCount, setSeenCount] = useState(0);
+
+    useEffect(() => {
+        if (ticket && ticket.replies && ticket.replies.length > 0) {
+            const currentSeen = parseInt(localStorage.getItem(`seen_replies_${ticket.id}`) || '0', 10);
+            setSeenCount(currentSeen);
+            localStorage.setItem(`seen_replies_${ticket.id}`, ticket.replies.length.toString());
+        }
+    }, [ticket]);
+
+    const lastReply = ticket.replies && ticket.replies.length > 0 ? ticket.replies[ticket.replies.length - 1] : null;
+    const hasNewITReply = lastReply && isIT(lastReply.user) && (ticket.replies.length > seenCount);
+    const everRepliedByIT = ticket.replies && ticket.replies.some(r => isIT(r.user));
 
     const handlePostReply = (e) => {
         e.preventDefault();
@@ -108,9 +128,11 @@ export default function TicketDetails({ ticket, canReply = false }) {
                             Ticket #{ticket.id}
                         </h2>
                     </div>
-                    <span className={`text-xs uppercase font-extrabold px-3.5 py-1.5 rounded-full ${getStatusBadge(ticket.status)}`}>
-                        {ticket.status.replace('_', ' ')}
-                    </span>
+                    {isITUser && (
+                        <span className={`text-xs uppercase font-extrabold px-3.5 py-1.5 rounded-full ${getStatusBadge(ticket.status)}`}>
+                            {ticket.status.replace('_', ' ')}
+                        </span>
+                    )}
                 </div>
             }
         >
@@ -182,7 +204,7 @@ export default function TicketDetails({ ticket, canReply = false }) {
                                 </div>
                             ) : (
                                 ticket.replies.map((reply) => {
-                                    const isITReply = reply.user?.role === 'it' || reply.user?.role === 'admin';
+                                    const isITReply = isIT(reply.user);
                                     return (
                                         <div
                                             key={reply.id}
@@ -196,7 +218,7 @@ export default function TicketDetails({ ticket, canReply = false }) {
                                                 isITReply ? 'border-slate-200/55 text-slate-450' : 'border-white/10 text-indigo-100'
                                             }`}>
                                                 <span className="font-extrabold uppercase tracking-wide">
-                                                    {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-slate-200/20 text-slate-700 px-1.5 py-0.2 rounded font-semibold text-[9px]">IT Support</span>}
+                                                    {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-slate-200/20 text-slate-700 px-1.5 py-0.2 rounded font-semibold text-[9px]">IT Department</span>}
                                                 </span>
                                                 <span className="font-medium">
                                                     {formatDate(reply.created_at)}

@@ -139,10 +139,10 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
 
     // Filter tickets
     const filteredTickets = tickets.filter(ticket => {
-        const matchesRead = readFilter === 'all' || 
-            (readFilter === 'unread' ? !ticket.is_read : 
-             readFilter === 'read' ? ticket.is_read : 
-             (!ticket.replies || ticket.replies.length === 0));
+        const matchesRead = readFilter === 'all' ||
+            (readFilter === 'unread' ? !ticket.is_read :
+                readFilter === 'read' ? ticket.is_read :
+                    (!ticket.replies || ticket.replies.length === 0));
         const searchLower = searchQuery.toLowerCase();
         const matchesSearch =
             ticket.title.toLowerCase().includes(searchLower) ||
@@ -199,7 +199,7 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                     </svg>
                                 </div>
                             </div>
-                            
+
                             <div className="bg-gradient-to-br from-rose-500/[0.04] to-transparent border border-rose-100 p-5 rounded-2xl flex items-center justify-between text-left shadow-sm relative overflow-hidden group">
                                 <div>
                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Unread Tickets</span>
@@ -218,7 +218,7 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                     </svg>
                                 </div>
                             </div>
-                            
+
                             <div className="bg-gradient-to-br from-emerald-500/[0.04] to-transparent border border-emerald-100 p-5 rounded-2xl flex items-center justify-between text-left shadow-sm relative overflow-hidden group">
                                 <div>
                                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Read Tickets</span>
@@ -257,7 +257,7 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                             />
                                         </div>
                                     </div>
-                                    
+
                                     <div>
                                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-405 mb-2">
                                             Filter by Read Status
@@ -285,13 +285,12 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                         className={`px-3.5 py-2 text-xs font-bold rounded-xl border flex items-center space-x-1.5 transition-all duration-150 ${activeStyle}`}
                                                     >
                                                         <span>{filter.label}</span>
-                                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold leading-none ${
-                                                            isActive
-                                                                ? 'bg-white/20 text-white'
-                                                                : filter.isUnread && filter.count > 0
-                                                                    ? 'bg-rose-500/10 text-rose-600'
-                                                                    : 'bg-slate-200 text-slate-500'
-                                                        }`}>
+                                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold leading-none ${isActive
+                                                            ? 'bg-white/20 text-white'
+                                                            : filter.isUnread && filter.count > 0
+                                                                ? 'bg-rose-500/10 text-rose-600'
+                                                                : 'bg-slate-200 text-slate-500'
+                                                            }`}>
                                                             {filter.count}
                                                         </span>
                                                     </button>
@@ -314,17 +313,16 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                 <div
                                                     key={ticket.id}
                                                     onClick={() => handleSelectTicket(ticket)}
-                                                    className={`p-5 rounded-2xl text-left border cursor-pointer transition-all duration-300 relative overflow-hidden ${
-                                                        isSelected
-                                                            ? 'bg-indigo-500/[0.02] border-indigo-500 shadow-sm pl-6'
-                                                            : 'bg-white border-slate-150 hover:border-slate-300'
-                                                    }`}
+                                                    className={`p-5 rounded-2xl text-left border cursor-pointer transition-all duration-300 relative overflow-hidden ${isSelected
+                                                        ? 'bg-indigo-500/[0.02] border-indigo-500 shadow-sm pl-6'
+                                                        : 'bg-white border-slate-150 hover:border-slate-300'
+                                                        }`}
                                                 >
                                                     {/* Left Accent indicator */}
                                                     {isSelected && (
                                                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600 rounded-l-2xl" />
                                                     )}
-                                                    
+
                                                     <div className="flex justify-between items-start mb-2.5">
                                                         <div className="flex items-center space-x-2">
                                                             {!ticket.is_read ? (
@@ -341,7 +339,7 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                             {formatDate(ticket.created_at)}
                                                         </span>
                                                     </div>
-                                                    
+
                                                     <h4 className="font-bold text-slate-800 text-base line-clamp-1 mb-1.5">
                                                         {ticket.title}
                                                     </h4>
@@ -398,7 +396,7 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                         <h3 className="text-xl font-bold text-slate-850">
                                             {selectedTicket.title}
                                         </h3>
-                                        
+
                                         <div className="flex items-center space-x-2 text-sm text-indigo-500 font-semibold mt-1">
                                             <PlatformIcon name={selectedTicket.platform?.name} className="h-4 w-4" />
                                             <span>Platform: {selectedTicket.platform?.name}</span>
@@ -409,7 +407,7 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                 </>
                                             )}
                                         </div>
-                                        
+
                                         <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                                             {selectedTicket.description}
                                         </div>
@@ -418,7 +416,7 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                     {/* Chat logs */}
                                     <div className="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col space-y-4 h-[350px] shadow-sm">
                                         <h4 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2 text-left">
-                                            Conversation Activity Thread
+                                            Conversation Activity
                                         </h4>
                                         <div className="flex-1 space-y-4 overflow-y-auto pr-1 text-left">
                                             {selectedTicket.replies?.length === 0 ? (
@@ -434,15 +432,13 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                     return (
                                                         <div
                                                             key={reply.id}
-                                                            className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left shadow-sm ${
-                                                                isITReply
-                                                                    ? 'ml-auto bg-indigo-600 text-white rounded-tr-none'
-                                                                    : 'mr-auto bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-none'
-                                                            }`}
+                                                            className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left shadow-sm ${isITReply
+                                                                ? 'ml-auto bg-indigo-600 text-white rounded-tr-none'
+                                                                : 'mr-auto bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-none'
+                                                                }`}
                                                         >
-                                                            <div className={`flex justify-between items-center gap-4 mb-1.5 border-b pb-1 text-[10px] ${
-                                                                isITReply ? 'border-white/10 text-indigo-100' : 'border-slate-200/55 text-slate-400'
-                                                            }`}>
+                                                            <div className={`flex justify-between items-center gap-4 mb-1.5 border-b pb-1 text-[10px] ${isITReply ? 'border-white/10 text-indigo-100' : 'border-slate-200/55 text-slate-400'
+                                                                }`}>
                                                                 <span className="font-extrabold uppercase tracking-wide">
                                                                     {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-white/20 text-white px-1.5 py-0.2 rounded font-semibold text-[9px]">IT Agent (You)</span>}
                                                                 </span>
@@ -591,8 +587,8 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                 <div
                                                     onClick={() => handleIssueSelect(null)}
                                                     className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${selectedCommonIssue === null
-                                                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 font-semibold'
-                                                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                                                        ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 font-semibold'
+                                                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                                                         }`}
                                                 >
                                                     Write a custom issue...
@@ -602,8 +598,8 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                         key={issue.id}
                                                         onClick={() => handleIssueSelect(issue)}
                                                         className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${selectedCommonIssue?.id === issue.id
-                                                                ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 font-semibold'
-                                                                : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                                                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 font-semibold'
+                                                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                                                             }`}
                                                     >
                                                         <div className="font-bold">{issue.title}</div>
@@ -684,6 +680,29 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [replyMessage, setReplyMessage] = useState('');
 
+    const isITUser = (usr) => {
+        if (!usr) return false;
+        return usr.role === 'it' || usr.role === 'admin' || usr.department_name === 'IT';
+    };
+
+    const [readCounts, setReadCounts] = useState({});
+
+    useEffect(() => {
+        const counts = {};
+        tickets.forEach(ticket => {
+            counts[ticket.id] = parseInt(localStorage.getItem(`seen_replies_${ticket.id}`) || '0', 10);
+        });
+        setReadCounts(counts);
+    }, [tickets]);
+
+    const markAsReadLocal = (ticketId, count) => {
+        localStorage.setItem(`seen_replies_${ticketId}`, count.toString());
+        setReadCounts(prev => ({
+            ...prev,
+            [ticketId]: count
+        }));
+    };
+
     useEffect(() => {
         setSelectedTicket(null);
     }, [activeTab]);
@@ -756,6 +775,9 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
             const updatedTicket = tickets.find(t => t.id === selectedTicket.id);
             if (updatedTicket) {
                 setSelectedTicket(updatedTicket);
+                if (updatedTicket.replies && updatedTicket.replies.length > 0) {
+                    markAsReadLocal(updatedTicket.id, updatedTicket.replies.length);
+                }
             }
         }
     }, [tickets]);
@@ -763,6 +785,9 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
     // Select a ticket to view conversation details
     const handleViewTicketDetails = (ticket) => {
         setSelectedTicket(ticket);
+        if (ticket.replies && ticket.replies.length > 0) {
+            markAsReadLocal(ticket.id, ticket.replies.length);
+        }
     };
 
     return (
@@ -870,11 +895,10 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
                                             <div className="space-y-2 max-h-80 overflow-y-auto pr-1 text-left">
                                                 <div
                                                     onClick={() => handleIssueSelect(null)}
-                                                    className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${
-                                                        selectedCommonIssue === null
-                                                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-605 font-semibold'
-                                                            : 'border-slate-200 hover:bg-slate-50 text-slate-705'
-                                                    }`}
+                                                    className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${selectedCommonIssue === null
+                                                        ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-605 font-semibold'
+                                                        : 'border-slate-200 hover:bg-slate-50 text-slate-705'
+                                                        }`}
                                                 >
                                                     Write a custom issue...
                                                 </div>
@@ -882,11 +906,10 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
                                                     <div
                                                         key={issue.id}
                                                         onClick={() => handleIssueSelect(issue)}
-                                                        className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${
-                                                            selectedCommonIssue?.id === issue.id
-                                                                ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-605 font-semibold'
-                                                                : 'border-slate-200 hover:bg-slate-50 text-slate-705'
-                                                        }`}
+                                                        className={`p-3.5 rounded-xl border text-sm cursor-pointer text-left transition-all duration-200 ${selectedCommonIssue?.id === issue.id
+                                                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-605 font-semibold'
+                                                            : 'border-slate-200 hover:bg-slate-50 text-slate-705'
+                                                            }`}
                                                     >
                                                         <div className="font-bold">{issue.title}</div>
                                                         <div className="text-xs text-slate-400 mt-1 line-clamp-2 font-normal">
@@ -984,25 +1007,31 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
                                 <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
                                     {tickets.map((ticket) => {
                                         const isSelected = selectedTicket?.id === ticket.id;
+                                        const lastReply = ticket.replies && ticket.replies.length > 0 ? ticket.replies[ticket.replies.length - 1] : null;
+                                        const isLastReplyFromIT = lastReply && isITUser(lastReply.user);
+                                        const seenCount = readCounts[ticket.id] || 0;
+                                        const hasNewITReply = isLastReplyFromIT && ticket.replies.length > seenCount;
+                                        const everRepliedByIT = ticket.replies && ticket.replies.some(r => isITUser(r.user));
                                         return (
                                             <div
                                                 key={ticket.id}
                                                 onClick={() => handleViewTicketDetails(ticket)}
-                                                className={`p-5 rounded-2xl text-left border cursor-pointer transition-all duration-300 relative overflow-hidden ${
-                                                    isSelected
-                                                        ? 'bg-indigo-500/[0.02] border-indigo-500 shadow-sm pl-6'
-                                                        : 'bg-white border-slate-150 hover:border-slate-350'
-                                                }`}
+                                                className={`p-5 rounded-2xl text-left border cursor-pointer transition-all duration-300 relative overflow-hidden ${isSelected
+                                                    ? 'bg-indigo-500/[0.02] border-indigo-500 shadow-sm pl-6'
+                                                    : 'bg-white border-slate-150 hover:border-slate-350'
+                                                    }`}
                                             >
                                                 {/* Left border indicator */}
                                                 {isSelected && (
                                                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600 rounded-l-2xl" />
                                                 )}
-                                                
+
                                                 <div className="flex justify-between items-start mb-2.5">
-                                                    <span className={`text-xs uppercase font-extrabold px-3 py-1 rounded-full leading-none tracking-wider ${getStatusBadge(ticket.status)}`}>
-                                                        {ticket.status.replace('_', ' ')}
-                                                    </span>
+                                                    {hasNewITReply && (
+                                                        <span className="bg-indigo-500 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full leading-none uppercase tracking-wider animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.4)]">
+                                                            New Reply
+                                                        </span>
+                                                    )}
                                                     <span className="text-xs text-slate-400">
                                                         {formatDate(ticket.created_at)}
                                                     </span>
@@ -1047,9 +1076,6 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
                                         Back to queue
                                     </button>
                                     <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
-                                        <span className={`text-xs uppercase font-extrabold px-3 py-1 rounded-full ${getStatusBadge(selectedTicket.status)}`}>
-                                            {selectedTicket.status.replace('_', ' ')}
-                                        </span>
                                         <span className="text-xs text-slate-400">
                                             Created: {formatDate(selectedTicket.created_at)}
                                         </span>
@@ -1084,21 +1110,19 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
                                             </div>
                                         ) : (
                                             selectedTicket.replies.map((reply) => {
-                                                const isITReply = reply.user?.role === 'it' || reply.user?.role === 'admin';
+                                                const isITReply = isITUser(reply.user);
                                                 return (
                                                     <div
                                                         key={reply.id}
-                                                        className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left shadow-sm ${
-                                                            isITReply
-                                                                ? 'mr-auto bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-none'
-                                                                : 'ml-auto bg-indigo-600 text-white rounded-tr-none'
-                                                        }`}
+                                                        className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left shadow-sm ${isITReply
+                                                            ? 'mr-auto bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-none'
+                                                            : 'ml-auto bg-indigo-600 text-white rounded-tr-none'
+                                                            }`}
                                                     >
-                                                        <div className={`flex justify-between items-center gap-4 mb-1.5 border-b pb-1 text-[10px] ${
-                                                            isITReply ? 'border-slate-200/55 text-slate-450' : 'border-white/10 text-indigo-100'
-                                                        }`}>
+                                                        <div className={`flex justify-between items-center gap-4 mb-1.5 border-b pb-1 text-[10px] ${isITReply ? 'border-slate-200/55 text-slate-450' : 'border-white/10 text-indigo-100'
+                                                            }`}>
                                                             <span className="font-extrabold uppercase tracking-wide">
-                                                                {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-slate-200/20 text-slate-700 px-1.5 py-0.2 rounded font-semibold text-[9px]">IT Staff</span>}
+                                                                {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-slate-200/20 text-slate-700 px-1.5 py-0.2 rounded font-semibold text-[9px]">IT Department</span>}
                                                             </span>
                                                             <span className="font-medium">
                                                                 {formatDate(reply.created_at)}
@@ -1166,18 +1190,17 @@ export default function Dashboard({ tickets = [], platforms = [], canReply = fal
             header={
                 <div className="flex justify-between items-center">
                     <h2 className="text-xl font-bold leading-tight text-slate-800 text-left">
-                        {resolvedIsItHod ? "IT Service Desk Dashboard" : "Helpdesk Ticketing System"}
+                        {resolvedIsItHod ? "IT Service Desk Dashboard" : "Ticketing System"}
                     </h2>
                     <div className="flex space-x-1 p-0.5 rounded-lg bg-slate-100/80 border border-slate-200/60">
                         {resolvedIsItHod ? (
                             <>
                                 <button
                                     onClick={() => setActiveTab('queue')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex items-center ${
-                                        activeTab === 'queue'
-                                            ? 'bg-white text-slate-900 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-900'
-                                    }`}
+                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex items-center ${activeTab === 'queue'
+                                        ? 'bg-white text-slate-900 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                        }`}
                                 >
                                     <span>Tickets Queue ({tickets.length})</span>
                                     {unreadCount > 0 && (
@@ -1188,11 +1211,10 @@ export default function Dashboard({ tickets = [], platforms = [], canReply = fal
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('new-ticket')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                                        activeTab === 'new-ticket'
-                                            ? 'bg-white text-slate-900 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-900'
-                                    }`}
+                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'new-ticket'
+                                        ? 'bg-white text-slate-900 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                        }`}
                                 >
                                     Submit Ticket
                                 </button>
@@ -1201,21 +1223,19 @@ export default function Dashboard({ tickets = [], platforms = [], canReply = fal
                             <>
                                 <button
                                     onClick={() => setActiveTab('new-ticket')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                                        activeTab === 'new-ticket'
-                                            ? 'bg-white text-slate-900 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-900'
-                                    }`}
+                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'new-ticket'
+                                        ? 'bg-white text-slate-900 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                        }`}
                                 >
                                     Submit Ticket
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('my-tickets')}
-                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
-                                        activeTab === 'my-tickets'
-                                            ? 'bg-white text-slate-900 shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-900'
-                                    }`}
+                                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'my-tickets'
+                                        ? 'bg-white text-slate-900 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900'
+                                        }`}
                                 >
                                     My Tickets ({tickets.length})
                                 </button>

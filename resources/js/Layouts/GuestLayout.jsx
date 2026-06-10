@@ -10,7 +10,7 @@ export default function GuestLayout({ children }) {
                         <ApplicationLogo className="h-10 w-10" />
                     </div>
                     <h1 className="mt-4 text-2xl font-black tracking-tight text-slate-800 font-sans text-center">
-                        Helpdesk
+                        Tecketing System
                     </h1>
                 </div>
 

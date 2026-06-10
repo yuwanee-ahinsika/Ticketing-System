@@ -1,4 +1,4 @@
-# 🎫 Helpdesk Ticketing System
+# 🎫 Tecketing System
 
 A premium, modern support and ticket-management application designed for internal departments. It features dynamic, role-based interfaces, instant read/unread notifications, interactive activity threads, and customized support submission cards.
 
@@ -11,14 +11,14 @@ The system integrates all views into a single, cohesive dashboard page (`Dashboa
 - **IT HOD & Admins**:
   - **Tickets Queue**: Access a centralized inbox of all submitted tickets with live counters, query search (filters titles, descriptions, users, and platforms), and read-status selectors (**All**, **Unread**, **Read**, **No Replies**).
   - **Submit Ticket**: Report platform issues.
-  - **Quick Replies & Status Controls**: Publish support updates and change ticket status directly via quick actions.
+  - **Quick Replies & Automatic Status Updates**: Publish support updates which automatically transition ticket statuses from open to in-progress.
 - **Standard Employees**:
   - **Submit Ticket**: Select platforms to submit issues.
   - **My Tickets**: Trace their own submitted tickets and reply back to the IT support staff.
 
 ### 🔔 Visual Read/Unread Status Notifications
 - **Status Badges**: Unread tickets feature a glowing, pulsing rose red **New** indicator. Read tickets show a neutral gray **Read** badge.
-- **Dynamic Title Counter**: The browser tab title updates instantly with the count of unread tickets (e.g. `(3) IT Service Desk`) to alert IT staff of new traffic.
+- **Dynamic Title Counter**: The browser tab title updates instantly with the count of unread tickets (e.g. `(3) Tecketing System`) to alert IT staff of new traffic.
 - **Pulsing Header Indicators**: Header navigation tabs highlight unread tickets via pulsing red numerical badges.
 
 ### 🔌 Custom Submission Forms
@@ -94,8 +94,8 @@ Use these seeded accounts to test different roles:
 
 | Role | Email | Password | Access Level |
 | :--- | :--- | :--- | :--- |
-| **IT Head (HOD)** | `it@explorevacations.lk` | `password` | Global Queue, Mark as Read, Post Replies, Update Status, Submit Tickets |
-| **Regular User** | `it@example.com` | `password` | Submit Tickets, View Own Tickets, Reply to Own Tickets |
+| **IT Head (HOD)** | `it@example.com` | `password` | Global Queue, Mark as Read, Post Replies, Submit Tickets |
+| **Regular User** | `user@example.com` | `password` | Submit Tickets, View Own Tickets, Reply to Own Tickets |
 
 ---
 
