@@ -215,24 +215,7 @@ export default function TicketDetails({ ticket, canReply = false }) {
                                 placeholder="Type details or response message here..."
                                 className="w-full rounded-xl border-slate-350 dark:border-slate-700 bg-white dark:bg-slate-900/60 text-slate-900 dark:text-slate-100 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 py-2.5 px-3.5"
                             />
-                            <div className="flex flex-wrap justify-between items-center gap-4">
-                                {canReply ? (
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-xs font-bold text-slate-500">Update Status:</span>
-                                        <select
-                                            value={updateStatusVal}
-                                            onChange={(e) => setUpdateStatusVal(e.target.value)}
-                                            className="text-xs rounded-lg border-slate-300 dark:border-slate-750 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:ring-indigo-500 focus:border-indigo-500"
-                                        >
-                                            <option value="">No change</option>
-                                            <option value="in_progress">In Progress</option>
-                                            <option value="resolved">Resolved</option>
-                                            <option value="closed">Closed</option>
-                                        </select>
-                                    </div>
-                                ) : (
-                                    <div />
-                                )}
+                            <div className="flex flex-wrap justify-end items-center gap-4">
                                 <button
                                     type="submit"
                                     className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
