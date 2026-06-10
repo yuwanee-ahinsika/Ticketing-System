@@ -78,17 +78,8 @@ export default function TicketDetails({ ticket, canReply = false }) {
     const [replyMessage, setReplyMessage] = useState('');
     const user = usePage().props.auth.user;
     const isITUser = user.role === 'it' || user.role === 'admin' || user.department_name === 'IT';
-    const isIT = (usr) => {
-        if (!usr) return false;
-        return usr.role === 'it' || usr.role === 'admin' || usr.department_name === 'IT';
-    };
-
-    const [seenCount, setSeenCount] = useState(0);
-
     useEffect(() => {
-        if (ticket && ticket.replies && ticket.replies.length > 0) {
-            const currentSeen = parseInt(localStorage.getItem(`seen_replies_${ticket.id}`) || '0', 10);
-            setSeenCount(currentSeen);
+        if (ticket?.replies?.length) {
             localStorage.setItem(`seen_replies_${ticket.id}`, ticket.replies.length.toString());
         }
     }, [ticket]);

@@ -680,28 +680,8 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [replyMessage, setReplyMessage] = useState('');
 
-    const isITUser = (usr) => {
-        if (!usr) return false;
-        return usr.role === 'it' || usr.role === 'admin' || usr.department_name === 'IT';
-    };
-
-    const [readCounts, setReadCounts] = useState({});
-
-    useEffect(() => {
-        const counts = {};
-        tickets.forEach(ticket => {
-            counts[ticket.id] = parseInt(localStorage.getItem(`seen_replies_${ticket.id}`) || '0', 10);
-        });
-        setReadCounts(counts);
-    }, [tickets]);
-
-    const markAsReadLocal = (ticketId, count) => {
-        localStorage.setItem(`seen_replies_${ticketId}`, count.toString());
-        setReadCounts(prev => ({
-            ...prev,
-            [ticketId]: count
-        }));
-    };
+    const isITUser = (usr) => usr && (usr.role === 'it' || usr.role === 'admin' || usr.department_name === 'IT');
+    const markAsRead = (t) => t?.replies?.length && localStorage.setItem(`seen_replies_${t.id}`, t.replies.length.toString());
 
     useEffect(() => {
         setSelectedTicket(null);
@@ -775,9 +755,7 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
             const updatedTicket = tickets.find(t => t.id === selectedTicket.id);
             if (updatedTicket) {
                 setSelectedTicket(updatedTicket);
-                if (updatedTicket.replies && updatedTicket.replies.length > 0) {
-                    markAsReadLocal(updatedTicket.id, updatedTicket.replies.length);
-                }
+                markAsRead(updatedTicket);
             }
         }
     }, [tickets]);
@@ -785,9 +763,7 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
     // Select a ticket to view conversation details
     const handleViewTicketDetails = (ticket) => {
         setSelectedTicket(ticket);
-        if (ticket.replies && ticket.replies.length > 0) {
-            markAsReadLocal(ticket.id, ticket.replies.length);
-        }
+        markAsRead(ticket);
     };
 
     return (
@@ -1009,9 +985,8 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
                                         const isSelected = selectedTicket?.id === ticket.id;
                                         const lastReply = ticket.replies && ticket.replies.length > 0 ? ticket.replies[ticket.replies.length - 1] : null;
                                         const isLastReplyFromIT = lastReply && isITUser(lastReply.user);
-                                        const seenCount = readCounts[ticket.id] || 0;
+                                        const seenCount = parseInt(localStorage.getItem(`seen_replies_${ticket.id}`) || '0', 10);
                                         const hasNewITReply = isLastReplyFromIT && ticket.replies.length > seenCount;
-                                        const everRepliedByIT = ticket.replies && ticket.replies.some(r => isITUser(r.user));
                                         return (
                                             <div
                                                 key={ticket.id}
