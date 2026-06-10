@@ -19,16 +19,18 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->isIt()) {
+        if ($user->isItHod()) {
             // IT Dashboard: Fetch all tickets with user details, platforms, and replies
             $tickets = Ticket::with(['user.employee', 'user.department', 'platform', 'commonIssue', 'replies.user'])
                 ->latest()
                 ->get();
             $platforms = Platform::with('commonIssues')->get();
 
-            return Inertia::render('ITDashboard', [
+            return Inertia::render('Dashboard', [
                 'tickets' => $tickets,
                 'platforms' => $platforms,
+                'canReply' => $user->isItHod(),
+                'isItHod' => true,
             ]);
         }
 
@@ -39,9 +41,10 @@ class TicketController extends Controller
             ->latest()
             ->get();
 
-        return Inertia::render('UserDashboard', [
+        return Inertia::render('Dashboard', [
             'platforms' => $platforms,
             'tickets' => $tickets,
+            'isItHod' => false,
         ]);
     }
 
@@ -77,7 +80,7 @@ class TicketController extends Controller
         $user = Auth::user();
 
         // Check if user is authorized to view (IT staff can view all, users can view only their own)
-        if (!$user->isIt() && $ticket->user_id !== $user->id) {
+        if (!$user->isItHod() && $ticket->user_id !== $user->id) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -85,6 +88,7 @@ class TicketController extends Controller
 
         return Inertia::render('TicketDetails', [
             'ticket' => $ticket,
+            'canReply' => $user->isItHod(),
         ]);
     }
 
@@ -95,8 +99,8 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        // Check authorization: Only IT department employees and admin can reply
-        if (!$user->isIt()) {
+        // Check authorization: Only IT HOD and admin can reply
+        if (!$user->isItHod()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -112,13 +116,20 @@ class TicketController extends Controller
             'message' => $request->message,
         ]);
 
-        // If IT staff replies, and asks to update the status, do so.
+        // If IT HOD replies, and asks to update the status, do so.
         // Otherwise, automatically change "open" status to "in_progress" when IT replies.
-        if ($user->isIt()) {
+        if ($user->isItHod()) {
             if ($request->update_status) {
-                $ticket->update(['status' => $request->update_status]);
-            } elseif ($ticket->status === 'open') {
-                $ticket->update(['status' => 'in_progress']);
+                $ticket->update([
+                    'status' => $request->update_status,
+                    'is_read' => true
+                ]);
+            } else {
+                $updateData = ['is_read' => true];
+                if ($ticket->status === 'open') {
+                    $updateData['status'] = 'in_progress';
+                }
+                $ticket->update($updateData);
             }
         }
 
@@ -132,7 +143,7 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->isIt()) {
+        if (!$user->isItHod()) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -140,8 +151,27 @@ class TicketController extends Controller
             'status' => 'required|string|in:open,in_progress,resolved,closed',
         ]);
 
-        $ticket->update(['status' => $request->status]);
+        $ticket->update([
+            'status' => $request->status,
+            'is_read' => true
+        ]);
 
         return redirect()->back()->with('success', 'Ticket status updated to ' . $request->status . '.');
+    }
+
+    /**
+     * Mark the specified ticket as read.
+     */
+    public function markAsRead(Ticket $ticket)
+    {
+        $user = Auth::user();
+
+        if (!$user->isItHod()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $ticket->update(['is_read' => true]);
+
+        return redirect()->back()->with('success', 'Ticket marked as read.');
     }
 }

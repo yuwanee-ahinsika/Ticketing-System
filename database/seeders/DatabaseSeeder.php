@@ -76,6 +76,14 @@ class DatabaseSeeder extends Seeder
                     ['title' => 'External Monitor Not Detected', 'description' => 'USB-C docking station does not display output to dual screens.'],
                     ['title' => 'Laptop Overheating / Swollen Battery', 'description' => 'Laptop trackpad is bulging or fans running constantly at 100%.'],
                 ]
+            ],
+            [
+                'name' => 'Other',
+                'description' => 'Submit any other software, hardware, peripheral issues, or general support requests.',
+                'issues' => [
+                    ['title' => 'General Support Inquiry', 'description' => 'General questions or assistance not falling under specific platforms.'],
+                    ['title' => 'Other Issue / Wrench Request', 'description' => 'A custom issue. Please describe the details of the problem in full.'],
+                ]
             ]
         ];
 

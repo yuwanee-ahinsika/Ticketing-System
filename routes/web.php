@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
     Route::post('/tickets/{ticket}/replies', [TicketController::class, 'storeReply'])->name('tickets.replies.store');
     Route::patch('/tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.status.update');
+    Route::patch('/tickets/{ticket}/read', [TicketController::class, 'markAsRead'])->name('tickets.read');
 });
 
 require __DIR__.'/auth.php';

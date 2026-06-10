@@ -16,6 +16,11 @@ class Ticket extends Model
         'title',
         'description',
         'status',
+        'is_read',
+    ];
+
+    protected $casts = [
+        'is_read' => 'boolean',
     ];
 
     /**
