@@ -26,6 +26,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/tickets/{ticket}/replies', [TicketController::class, 'storeReply'])->name('tickets.replies.store');
     Route::patch('/tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.status.update');
     Route::patch('/tickets/{ticket}/read', [TicketController::class, 'markAsRead'])->name('tickets.read');
+
+    // Platform and Common Issues CRUD Routes
+    Route::post('/platforms', [\App\Http\Controllers\PlatformController::class, 'store'])->name('platforms.store');
+    Route::patch('/platforms/{platform}', [\App\Http\Controllers\PlatformController::class, 'update'])->name('platforms.update');
+    Route::delete('/platforms/{platform}', [\App\Http\Controllers\PlatformController::class, 'destroy'])->name('platforms.destroy');
+    Route::post('/platforms/{platform}/issues', [\App\Http\Controllers\PlatformController::class, 'storeIssue'])->name('platforms.issues.store');
+    Route::patch('/issues/{issue}', [\App\Http\Controllers\PlatformController::class, 'updateIssue'])->name('issues.update');
+    Route::delete('/issues/{issue}', [\App\Http\Controllers\PlatformController::class, 'destroyIssue'])->name('issues.destroy');
 });
 
 require __DIR__.'/auth.php';

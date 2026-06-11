@@ -46,7 +46,8 @@ const PlatformIcon = ({ name, className }) => {
         default:
             return (
                 <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <circle cx="12" cy="12" r="3" />
                 </svg>
             );
     }
@@ -77,7 +78,7 @@ const getStatusBadge = (status) => {
 // ==========================================
 // 1. IT STAFF VIEW COMPONENT
 // ==========================================
-function ITDashboardView({ tickets = [], platforms = [], canReply = false, activeTab, setActiveTab }) {
+function ITDashboardView({ tickets = [], platforms = [], canReply = false, activeTab, setActiveTab, isItHod = false }) {
     const [selectedPlatform, setSelectedPlatform] = useState(null);
     const [selectedCommonIssue, setSelectedCommonIssue] = useState(null);
     const [selectedTicketId, setSelectedTicketId] = useState(null);
@@ -240,26 +241,6 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                 <div className="bg-white border border-slate-100 p-5 rounded-2xl space-y-5 shadow-sm text-left">
                                     <div>
                                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-405 mb-2">
-                                            Search tickets
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                                                <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                                </svg>
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                placeholder="Search title, details, user..."
-                                                className="w-full pl-11 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-200"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-405 mb-2">
                                             Filter by Read Status
                                         </label>
                                         <div className="flex flex-wrap gap-2">
@@ -347,9 +328,6 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                                                         <span className="text-indigo-500">{ticket.platform?.name}</span>
                                                         <span className="text-slate-700 font-bold">By: {ticket.user?.name}</span>
                                                     </div>
-                                                    <p className="text-sm text-slate-500 line-clamp-2">
-                                                        {ticket.description}
-                                                    </p>
                                                 </div>
                                             );
                                         })
@@ -666,6 +644,407 @@ function ITDashboardView({ tickets = [], platforms = [], canReply = false, activ
                         )}
                     </div>
                 )}
+
+                {/* MANAGE PLATFORMS TAB */}
+                {activeTab === 'manage-platforms' && isItHod && (
+                    <ManagePlatformsView platforms={platforms} />
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ==========================================
+// 1.5 MANAGE PLATFORMS VIEW COMPONENT
+// ==========================================
+function ManagePlatformsView({ platforms = [] }) {
+    const { errors } = usePage().props;
+
+    const [showAddPlatform, setShowAddPlatform] = useState(false);
+    const [newPlatformName, setNewPlatformName] = useState('');
+    const [newPlatformDesc, setNewPlatformDesc] = useState('');
+
+    const [editingPlatformId, setEditingPlatformId] = useState(null);
+    const [editPlatformName, setEditPlatformName] = useState('');
+    const [editPlatformDesc, setEditPlatformDesc] = useState('');
+
+    const [addingIssuePlatformId, setAddingIssuePlatformId] = useState(null);
+    const [newIssueTitle, setNewIssueTitle] = useState('');
+    const [newIssueDesc, setNewIssueDesc] = useState('');
+
+    const [editingIssueId, setEditingIssueId] = useState(null);
+    const [editIssueTitle, setEditIssueTitle] = useState('');
+    const [editIssueDesc, setEditIssueDesc] = useState('');
+
+    const handleCreatePlatform = (e) => {
+        e.preventDefault();
+        router.post(route('platforms.store'), {
+            name: newPlatformName,
+            description: newPlatformDesc
+        }, {
+            onSuccess: () => {
+                setShowAddPlatform(false);
+                setNewPlatformName('');
+                setNewPlatformDesc('');
+            }
+        });
+    };
+
+    const handleUpdatePlatform = (e, platformId) => {
+        e.preventDefault();
+        router.patch(route('platforms.update', platformId), {
+            name: editPlatformName,
+            description: editPlatformDesc
+        }, {
+            onSuccess: () => {
+                setEditingPlatformId(null);
+            }
+        });
+    };
+
+    const handleDestroyPlatform = (platform) => {
+        if (confirm(`Are you sure you want to delete the platform "${platform.name}"? This will permanently delete all associated issue categories and tickets!`)) {
+            router.delete(route('platforms.destroy', platform.id));
+        }
+    };
+
+    const handleCreateIssue = (e, platformId) => {
+        e.preventDefault();
+        router.post(route('platforms.issues.store', platformId), {
+            title: newIssueTitle,
+            description: newIssueDesc
+        }, {
+            onSuccess: () => {
+                setAddingIssuePlatformId(null);
+                setNewIssueTitle('');
+                setNewIssueDesc('');
+            }
+        });
+    };
+
+    const handleUpdateIssue = (e, issueId) => {
+        e.preventDefault();
+        router.patch(route('issues.update', issueId), {
+            title: editIssueTitle,
+            description: editIssueDesc
+        }, {
+            onSuccess: () => {
+                setEditingIssueId(null);
+            }
+        });
+    };
+
+    const handleDestroyIssue = (issue) => {
+        if (confirm(`Are you sure you want to delete the issue category "${issue.title}"?`)) {
+            router.delete(route('issues.destroy', issue.id));
+        }
+    };
+
+    return (
+        <div className="py-6 text-slate-800 animate-fadeIn text-left">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+                    <div className="text-left">
+                        <h3 className="text-lg font-bold text-slate-800">Manage Platforms & Issue Categories</h3>
+                        <p className="text-sm text-slate-500">Configure standard support desk platforms and templates</p>
+                    </div>
+                    {!showAddPlatform && (
+                        <button
+                            onClick={() => setShowAddPlatform(true)}
+                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-505 text-white font-semibold rounded-xl text-sm shadow-md transition-all duration-200 flex items-center space-x-2"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span>Add Platform</span>
+                        </button>
+                    )}
+                </div>
+
+                {showAddPlatform && (
+                    <div className="bg-white border border-slate-150 p-6 rounded-2xl shadow-sm text-left animate-slideIn">
+                        <h4 className="font-bold text-slate-800 text-base mb-4">Create New Platform</h4>
+                        <form onSubmit={handleCreatePlatform} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Platform Name</label>
+                                    <input
+                                        type="text"
+                                        value={newPlatformName}
+                                        onChange={(e) => setNewPlatformName(e.target.value)}
+                                        placeholder="e.g. Finance Hub, Marketing Portal"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-2.5 px-3.5"
+                                        required
+                                    />
+                                    {errors?.name && <span className="text-rose-500 text-xs mt-1 block">{errors.name}</span>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Description</label>
+                                    <input
+                                        type="text"
+                                        value={newPlatformDesc}
+                                        onChange={(e) => setNewPlatformDesc(e.target.value)}
+                                        placeholder="e.g. ERP tool for company accountants"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-2.5 px-3.5"
+                                    />
+                                    {errors?.description && <span className="text-rose-500 text-xs mt-1 block">{errors.description}</span>}
+                                </div>
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddPlatform(false);
+                                        setNewPlatformName('');
+                                        setNewPlatformDesc('');
+                                    }}
+                                    className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold rounded-xl text-sm transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-550 text-white font-semibold rounded-xl text-sm shadow-md transition-all"
+                                >
+                                    Save Platform
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {platforms.map((platform) => (
+                        <div key={platform.id} className="bg-white border border-slate-150 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between text-left">
+                            <div>
+                                {editingPlatformId === platform.id ? (
+                                    <form onSubmit={(e) => handleUpdatePlatform(e, platform.id)} className="space-y-4 text-left border-b border-slate-100 pb-4 mb-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Platform Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={editPlatformName}
+                                                    onChange={(e) => setEditPlatformName(e.target.value)}
+                                                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-2 px-3"
+                                                    required
+                                                />
+                                                {errors?.name && <span className="text-rose-500 text-xs mt-1 block">{errors.name}</span>}
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Description</label>
+                                                <input
+                                                    type="text"
+                                                    value={editPlatformDesc}
+                                                    onChange={(e) => setEditPlatformDesc(e.target.value)}
+                                                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-2 px-3"
+                                                />
+                                                {errors?.description && <span className="text-rose-500 text-xs mt-1 block">{errors.description}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end space-x-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditingPlatformId(null)}
+                                                className="px-3 py-1.5 border border-slate-200 text-slate-600 font-semibold rounded-lg text-xs hover:bg-slate-50 transition-all"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="px-3 py-1.5 bg-indigo-600 text-white font-semibold rounded-lg text-xs hover:bg-indigo-550 transition-all"
+                                            >
+                                                Save Changes
+                                            </button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="flex items-start justify-between border-b border-slate-100 pb-4 mb-4">
+                                        <div className="flex items-center space-x-3 text-left">
+                                            <div className="p-3 bg-indigo-500/10 text-indigo-650 rounded-xl">
+                                                <PlatformIcon name={platform.name} className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-lg font-bold text-slate-800">{platform.name}</h4>
+                                                <p className="text-xs text-slate-500 line-clamp-2">{platform.description || 'No description provided.'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex space-x-1">
+                                            <button
+                                                onClick={() => {
+                                                    setEditingPlatformId(platform.id);
+                                                    setEditPlatformName(platform.name);
+                                                    setEditPlatformDesc(platform.description || '');
+                                                }}
+                                                className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-50 transition-colors"
+                                                title="Edit Platform"
+                                            >
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={() => handleDestroyPlatform(platform)}
+                                                className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-50 transition-colors"
+                                                title="Delete Platform"
+                                            >
+                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h5 className="text-xs font-bold uppercase tracking-wider text-slate-400">Issue Categories</h5>
+                                        {addingIssuePlatformId !== platform.id && (
+                                            <button
+                                                onClick={() => {
+                                                    setAddingIssuePlatformId(platform.id);
+                                                    setNewIssueTitle('');
+                                                    setNewIssueDesc('');
+                                                }}
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-500 flex items-center"
+                                            >
+                                                <svg className="h-3.5 w-3.5 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                Add Category
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {addingIssuePlatformId === platform.id && (
+                                        <form onSubmit={(e) => handleCreateIssue(e, platform.id)} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 text-left animate-slideIn">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-600 mb-1">Issue Category Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={newIssueTitle}
+                                                    onChange={(e) => setNewIssueTitle(e.target.value)}
+                                                    placeholder="e.g. Password Reset, System Crash"
+                                                    className="w-full rounded-lg border border-slate-200 bg-white text-slate-800 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-1.5 px-2.5"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-600 mb-1">Default Template Text (Optional)</label>
+                                                <textarea
+                                                    value={newIssueDesc}
+                                                    onChange={(e) => setNewIssueDesc(e.target.value)}
+                                                    placeholder="This text will pre-fill the issue description for the user"
+                                                    className="w-full rounded-lg border border-slate-200 bg-white text-slate-800 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-1.5 px-2.5"
+                                                    rows={2}
+                                                />
+                                            </div>
+                                            <div className="flex justify-end space-x-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setAddingIssuePlatformId(null)}
+                                                    className="px-2.5 py-1.5 border border-slate-200 text-slate-650 font-semibold rounded-lg text-[11px] hover:bg-slate-100 transition-all"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    className="px-2.5 py-1.5 bg-indigo-600 text-white font-semibold rounded-lg text-[11px] hover:bg-indigo-500 transition-all"
+                                                >
+                                                    Save Category
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                        {platform.common_issues && platform.common_issues.length > 0 ? (
+                                            platform.common_issues.map((issue) => (
+                                                <div key={issue.id} className="p-3 bg-slate-50 border border-slate-150 rounded-xl">
+                                                    {editingIssueId === issue.id ? (
+                                                        <form onSubmit={(e) => handleUpdateIssue(e, issue.id)} className="space-y-2 text-left">
+                                                            <div>
+                                                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Title</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={editIssueTitle}
+                                                                    onChange={(e) => setEditIssueTitle(e.target.value)}
+                                                                    className="w-full rounded-lg border border-slate-200 bg-white text-slate-800 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-1.5 px-2.5"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Description Template</label>
+                                                                <textarea
+                                                                    value={editIssueDesc}
+                                                                    onChange={(e) => setEditIssueDesc(e.target.value)}
+                                                                    className="w-full rounded-lg border border-slate-200 bg-white text-slate-800 text-xs focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all py-1.5 px-2.5"
+                                                                    rows={2}
+                                                                />
+                                                            </div>
+                                                            <div className="flex justify-end space-x-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditingIssueId(null)}
+                                                                    className="px-2 py-1 border border-slate-200 text-slate-500 rounded text-[10px] hover:bg-slate-100 transition-all"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    type="submit"
+                                                                    className="px-2 py-1 bg-indigo-600 text-white rounded text-[10px] hover:bg-indigo-500 transition-all"
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    ) : (
+                                                        <div className="flex justify-between items-start text-left">
+                                                            <div className="flex-1 min-w-0 pr-2">
+                                                                <span className="block font-bold text-slate-800 text-sm truncate">{issue.title}</span>
+                                                                {issue.description && (
+                                                                    <span className="block text-xs text-slate-450 line-clamp-2 mt-0.5">{issue.description}</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex space-x-0.5">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingIssueId(issue.id);
+                                                                        setEditIssueTitle(issue.title);
+                                                                        setEditIssueDesc(issue.description || '');
+                                                                    }}
+                                                                    className="p-1 text-slate-400 hover:text-indigo-600 rounded hover:bg-white transition-colors"
+                                                                    title="Edit Category"
+                                                                >
+                                                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                                    </svg>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDestroyIssue(issue)}
+                                                                    className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-white transition-colors"
+                                                                    title="Delete Category"
+                                                                >
+                                                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-xs text-slate-400 py-3 text-center border border-dashed border-slate-200 rounded-xl">
+                                                No issue templates configured.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -1018,9 +1397,6 @@ function UserDashboardView({ tickets = [], platforms = [], activeTab, setActiveT
                                                     <PlatformIcon name={ticket.platform?.name} className="h-3.5 w-3.5" />
                                                     <span>{ticket.platform?.name}</span>
                                                 </div>
-                                                <p className="text-sm text-slate-500 line-clamp-2">
-                                                    {ticket.description}
-                                                </p>
                                                 {ticket.replies?.length > 0 && (
                                                     <div className="mt-3 pt-3 border-t border-slate-150 flex items-center space-x-2 text-xs text-slate-400">
                                                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1193,6 +1569,17 @@ export default function Dashboard({ tickets = [], platforms = [], canReply = fal
                                 >
                                     Submit Ticket
                                 </button>
+                                {isItHod && (
+                                    <button
+                                        onClick={() => setActiveTab('manage-platforms')}
+                                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${activeTab === 'manage-platforms'
+                                            ? 'bg-white text-slate-900 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-900'
+                                            }`}
+                                    >
+                                        Manage Platforms
+                                    </button>
+                                )}
                             </>
                         ) : (
                             <>
@@ -1229,6 +1616,7 @@ export default function Dashboard({ tickets = [], platforms = [], canReply = fal
                     canReply={canReply}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    isItHod={isItHod}
                 />
             ) : (
                 <UserDashboardView

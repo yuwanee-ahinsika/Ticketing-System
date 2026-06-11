@@ -24,7 +24,10 @@ class TicketController extends Controller
             $tickets = Ticket::with(['user.employee', 'user.department', 'platform', 'commonIssue', 'replies.user'])
                 ->latest()
                 ->get();
-            $platforms = Platform::with('commonIssues')->get();
+            $platforms = Platform::with('commonIssues')
+                ->orderByRaw("CASE WHEN name = 'Other' THEN 1 ELSE 0 END")
+                ->orderBy('name')
+                ->get();
 
             return Inertia::render('Dashboard', [
                 'tickets' => $tickets,
@@ -35,7 +38,10 @@ class TicketController extends Controller
         }
 
         // User Dashboard: Fetch platforms (with their issues) and user's own tickets
-        $platforms = Platform::with('commonIssues')->get();
+        $platforms = Platform::with('commonIssues')
+            ->orderByRaw("CASE WHEN name = 'Other' THEN 1 ELSE 0 END")
+            ->orderBy('name')
+            ->get();
         $tickets = Ticket::where('user_id', $user->id)
             ->with(['platform', 'commonIssue', 'replies.user', 'user.employee', 'user.department'])
             ->latest()
@@ -57,7 +63,7 @@ class TicketController extends Controller
             'platform_id' => 'required|exists:platforms,id',
             'common_issue_id' => 'nullable|exists:common_issues,id',
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
         ]);
 
         Ticket::create([
