@@ -94,7 +94,7 @@ class TicketController extends Controller
 
         return Inertia::render('TicketDetails', [
             'ticket' => $ticket,
-            'canReply' => $user->isItHod(),
+            'canReply' => $user->isItHod() || $ticket->user_id === $user->id,
         ]);
     }
 
@@ -105,8 +105,8 @@ class TicketController extends Controller
     {
         $user = Auth::user();
 
-        // Check authorization: Only IT HOD and admin can reply
-        if (!$user->isItHod()) {
+        // Check authorization: Only IT HOD/admin or the ticket owner can reply
+        if (!$user->isItHod() && $ticket->user_id !== $user->id) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -122,8 +122,7 @@ class TicketController extends Controller
             'message' => $request->message,
         ]);
 
-        // If IT HOD replies, and asks to update the status, do so.
-        // Otherwise, automatically change "open" status to "in_progress" when IT replies.
+        // If IT HOD/admin replies, handle status updates and mark as read for IT
         if ($user->isItHod()) {
             if ($request->update_status) {
                 $ticket->update([
@@ -137,6 +136,11 @@ class TicketController extends Controller
                 }
                 $ticket->update($updateData);
             }
+        } else {
+            // If the ticket owner replies, mark the ticket as unread so IT gets notified of new activity
+            $ticket->update([
+                'is_read' => false
+            ]);
         }
 
         return redirect()->back()->with('success', 'Reply submitted successfully.');
