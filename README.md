@@ -11,19 +11,21 @@ The system integrates all views into a single, cohesive dashboard page (`Dashboa
 - **IT HOD & Admins**:
   - **Tickets Queue**: Access a centralized inbox of all submitted tickets with live counters, query search (filters titles, descriptions, users, and platforms), and read-status selectors (**All**, **Unread**, **Read**, **No Replies**).
   - **Submit Ticket**: Report platform issues.
+  - **Manage Platforms & Issues**: A dedicated configuration panel to dynamically create, edit, and delete support platforms and their standard issue templates.
   - **Quick Replies & Automatic Status Updates**: Publish support updates which automatically transition ticket statuses from open to in-progress.
 - **Standard Employees**:
-  - **Submit Ticket**: Select platforms to submit issues.
-  - **My Tickets**: Trace their own submitted tickets and reply back to the IT support staff.
+  - **Submit Ticket**: Select platforms and issue types to submit support tickets. The detailed description field is optional.
+  - **My Tickets**: Trace their own submitted tickets and reply back to the IT support staff directly on the ticket details page.
 
 ### 🔔 Visual Read/Unread Status Notifications
 - **Status Badges**: Unread tickets feature a glowing, pulsing rose red **New** indicator. Read tickets show a neutral gray **Read** badge.
 - **Dynamic Title Counter**: The browser tab title updates instantly with the count of unread tickets (e.g. `(3) Tecketing System`) to alert IT staff of new traffic.
 - **Pulsing Header Indicators**: Header navigation tabs highlight unread tickets via pulsing red numerical badges.
 
-### 🔌 Custom Submission Forms
-- **Predefined Issue Templates**: Quick templates are available for key business platforms (ERP, Customer Portal, WiFi & Network, Hardware, Email & Office).
+### 🔌 Custom Submission Forms & Platform Management
+- **Predefined Issue Templates**: Quick templates are available for key business platforms (ERP, Customer Portal, WiFi & Network, Hardware, Email & Office) and can be dynamically managed by IT HODs/Admins.
 - **"Other" Platform Card**: Styled with a customized help-circle icon, this option enables custom issue reporting. It automatically hides the standard issue templates, guiding the user straight to details submission.
+- **Dynamic Platform Sorting**: The "Other" platform is dynamically sorted and always displayed as the last option in the dashboard grid and form selection dropdowns.
 
 ### 💬 Active Conversation Threads
 - Clean chat logs organize communications between employees and IT support agents.
@@ -94,8 +96,8 @@ Use these seeded accounts to test different roles:
 
 | Role | Email | Password | Access Level |
 | :--- | :--- | :--- | :--- |
-| **IT Head (HOD)** | `it@example.com` | `password` | Global Queue, Mark as Read, Post Replies, Submit Tickets |
-| **Regular User** | `user@example.com` | `password` | Submit Tickets, View Own Tickets, Reply to Own Tickets |
+| **IT Head (HOD) / Admin** | `admin2@example.com` | `password` | Global Queue, Manage Platforms & Issues, Mark as Read, Post Replies, Submit Tickets |
+| **Regular User** | `user@example.com` | `password` | Submit Tickets (with optional description), View Own Tickets, Reply to Own Tickets |
 
 ---
 
