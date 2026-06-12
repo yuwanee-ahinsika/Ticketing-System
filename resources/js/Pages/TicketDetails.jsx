@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, Link, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 
-// Platform Icons helper component (matches dashboards)
+// Platform icon
 const PlatformIcon = ({ name, className }) => {
     switch (name) {
         case 'ERP System':
@@ -35,14 +35,6 @@ const PlatformIcon = ({ name, className }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
             );
-        case 'Other':
-            return (
-                <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="12" r="10" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-            );
         default:
             return (
                 <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -52,199 +44,249 @@ const PlatformIcon = ({ name, className }) => {
     }
 };
 
-// Date formatter
 const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    if (!dateString) return '—';
+    return new Date(dateString).toLocaleDateString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
 };
 
-// Status badge helper
-const getStatusBadge = (status) => {
+const getStatusStyle = (status) => {
     switch (status) {
-        case 'open':
-            return 'bg-amber-500/10 text-amber-600 border border-amber-500/20';
-        case 'in_progress':
-            return 'bg-blue-500/10 text-blue-600 border border-blue-500/20';
-        case 'resolved':
-            return 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20';
-        case 'closed':
-            return 'bg-slate-105 text-slate-600 border border-slate-200';
-        default:
-            return 'bg-slate-105 text-slate-600 border border-slate-200';
+        case 'open': return { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', color: '#b45309', label: '🔵 Open' };
+        case 'in_progress': return { bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.3)', color: '#1d4ed8', label: '⚙️ In Progress' };
+        case 'resolved': return { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', color: '#047857', label: '✅ Resolved' };
+        case 'closed': return { bg: 'rgba(100,116,139,0.1)', border: 'rgba(100,116,139,0.25)', color: '#475569', label: '⛔ Closed' };
+        default: return { bg: 'rgba(226,232,240,0.8)', border: 'rgba(226,232,240,0.9)', color: '#64748b', label: status };
     }
 };
 
 export default function TicketDetails({ ticket, canReply = false }) {
     const [replyMessage, setReplyMessage] = useState('');
     const user = usePage().props.auth.user;
-    const isITUser = user.role === 'it' || user.role === 'admin' || user.department_name === 'IT';
+    const isIT = (usr) => usr && (usr.role === 'it' || usr.role === 'admin' || usr.department_name === 'IT');
+    const isITUser = isIT(user);
+    const seenCount = parseInt(localStorage.getItem(`seen_replies_${ticket.id}`) || '0', 10);
+
     useEffect(() => {
         if (ticket?.replies?.length) {
             localStorage.setItem(`seen_replies_${ticket.id}`, ticket.replies.length.toString());
         }
     }, [ticket]);
 
-    const lastReply = ticket.replies && ticket.replies.length > 0 ? ticket.replies[ticket.replies.length - 1] : null;
+    const lastReply = ticket.replies?.length > 0 ? ticket.replies[ticket.replies.length - 1] : null;
     const hasNewITReply = lastReply && isIT(lastReply.user) && (ticket.replies.length > seenCount);
-    const everRepliedByIT = ticket.replies && ticket.replies.some(r => isIT(r.user));
+    const statusStyle = getStatusStyle(ticket.status);
 
     const handlePostReply = (e) => {
         e.preventDefault();
         if (!replyMessage.trim()) return;
-
         router.post(route('tickets.replies.store', ticket.id), {
             message: replyMessage,
             update_status: null
-        }, {
-            onSuccess: () => {
-                setReplyMessage('');
-            }
-        });
+        }, { onSuccess: () => setReplyMessage('') });
     };
 
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                        <Link
-                            href={route('dashboard')}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 transition-all duration-200"
-                        >
-                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </Link>
-                        <h2 className="text-xl font-bold leading-tight text-slate-800">
-                            Ticket #{ticket.id}
-                        </h2>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <Link
+                                href={route('dashboard')}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200 hover:scale-110 hover:-translate-x-0.5 group"
+                                style={{
+                                    background: 'rgba(255,255,255,0.85)',
+                                    border: '1px solid rgba(226,232,240,0.9)',
+                                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+                                    color: '#64748b',
+                                }}
+                            >
+                                <svg className="h-4 w-4 group-hover:text-indigo-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </Link>
+                            <div>
+                                <h2 className="text-2xl font-black leading-tight" style={{ letterSpacing: '-0.03em' }}>
+                                    <span className="text-slate-800">Ticket </span>
+                                    <span className="gradient-text-brand">#{ticket.id}</span>
+                                </h2>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <PlatformIcon name={ticket.platform?.name} className="h-3.5 w-3.5 text-indigo-500" />
+                                    <span className="text-xs text-slate-500 font-semibold">{ticket.platform?.name}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <span className="text-xs font-extrabold uppercase tracking-wider px-4 py-2 rounded-full card-shine"
+                            style={{
+                                background: statusStyle.bg,
+                                border: `1px solid ${statusStyle.border}`,
+                                color: statusStyle.color,
+                                boxShadow: `0 4px 12px ${statusStyle.border}`,
+                            }}>
+                        {statusStyle.label}
+                    </span>
                     </div>
-                    {isITUser && (
-                        <span className={`text-xs uppercase font-extrabold px-3.5 py-1.5 rounded-full ${getStatusBadge(ticket.status)}`}>
-                            {ticket.status.replace('_', ' ')}
-                        </span>
-                    )}
+                    {/* Subtle gradient divider */}
+                    <div className="section-divider" />
                 </div>
             }
         >
-            <Head title={`Ticket #${ticket.id} Details`} />
+            <Head title={`Ticket #${ticket.id} — Details`} />
 
-            <div className="py-8 text-slate-850">
-                <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-6">
-                    {/* Ticket details summary */}
-                    <div className="bg-white border border-slate-100 p-6 sm:p-8 rounded-2xl text-left space-y-4 shadow-sm">
-                        <div className="flex flex-wrap justify-between items-start gap-4 border-b border-slate-100 pb-4">
-                            <div>
-                                <span className="text-xs text-slate-400 block mb-0.5">
-                                    CREATOR
-                                </span>
-                                <div className="flex items-center space-x-2">
-                                    <span className="font-bold text-slate-800 text-base">
-                                        {ticket.user?.name}
-                                    </span>
-                                    {ticket.user?.employee?.employee_code && (
-                                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 font-mono font-bold">
-                                            {ticket.user.employee.employee_code}
+            <div className="py-6">
+                <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 space-y-5">
+
+                    {/* ─── Ticket Info Card ─── */}
+                    <div className="glass-panel p-7 rounded-2xl text-left animate-slideUp">
+                        {/* Creator + date header */}
+                        <div className="flex flex-wrap justify-between items-center gap-4 pb-5 mb-5 border-b border-slate-100/85">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white text-sm font-black shadow-sm"
+                                    style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}>
+                                    {ticket.user?.name?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                                </div>
+                                <div>
+                                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-[0.1em] block mb-0.5">Submitted By</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-black text-slate-800 text-base leading-none">{ticket.user?.name}</span>
+                                    </div>
+                                    {ticket.user?.department?.name && (
+                                        <span className="text-[11px] text-slate-500 font-bold block mt-1">
+                                            🏢 {ticket.user.department.name}
                                         </span>
                                     )}
                                 </div>
-                                <div className="text-xs text-slate-450 mt-1 space-y-0.5">
-                                    <div>Email: {ticket.user?.email}</div>
-                                    {ticket.user?.department?.name && (
-                                        <div>Department: <span className="font-semibold text-slate-700">{ticket.user.department.name}</span></div>
-                                    )}
-                                </div>
                             </div>
-                            <div className="sm:text-right">
-                                <span className="text-xs text-slate-400 block mb-0.5">
-                                    SUBMITTED AT
-                                </span>
-                                <span className="font-semibold text-slate-705 text-sm">
-                                    {formatDate(ticket.created_at)}
-                                </span>
+
+                            <div className="text-right">
+                                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-[0.1em] block mb-1">Date Submitted</span>
+                                <div className="flex items-center gap-1.5 justify-end text-slate-700 font-bold text-sm">
+                                    <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>{formatDate(ticket.created_at)}</span>
+                                </div>
+
+                                {hasNewITReply && !isITUser && (
+                                    <div className="mt-2 flex justify-end">
+                                        <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full text-indigo-600 notification-dot"
+                                            style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                                            💬 New IT Reply
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-850 mt-2">
+                        {/* Title */}
+                        <h3 className="text-2xl font-black text-slate-800 leading-tight mb-3">
                             {ticket.title}
                         </h3>
-                        <div className="flex items-center space-x-2 text-sm text-indigo-500 font-semibold">
-                            <PlatformIcon name={ticket.platform?.name} className="h-4 w-4" />
-                            <span>Platform: {ticket.platform?.name}</span>
+
+                        {/* Platform badges */}
+                        <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-indigo-600 mb-4">
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                                style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.15)' }}>
+                                <PlatformIcon name={ticket.platform?.name} className="h-4 w-4" />
+                                <span>{ticket.platform?.name}</span>
+                            </div>
                             {ticket.common_issue && (
-                                <>
-                                    <span className="text-slate-300">•</span>
-                                    <span>Template: {ticket.common_issue?.title}</span>
-                                </>
+                                <span className="px-3 py-1.5 rounded-xl text-slate-600 font-semibold text-xs"
+                                    style={{ background: 'rgba(241,245,249,0.9)', border: '1px solid rgba(226,232,240,0.8)' }}>
+                                    📂 {ticket.common_issue?.title}
+                                </span>
                             )}
                         </div>
-                        <div className="mt-4 p-4.5 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
-                            {ticket.description}
-                        </div>
+
+                        {/* Description */}
+                        {ticket.description && (
+                            <div className="p-5 rounded-xl text-sm text-slate-700 whitespace-pre-wrap leading-relaxed"
+                                style={{ background: 'rgba(248,250,252,0.8)', border: '1px solid rgba(226,232,240,0.8)' }}>
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Description</div>
+                                {ticket.description}
+                            </div>
+                        )}
                     </div>
 
-                    {/* Chat log / Activity thread */}
-                    <div className="bg-white border border-slate-100 p-6 rounded-2xl flex flex-col space-y-4 min-h-[300px] shadow-sm">
-                        <h4 className="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2 text-left">
-                            Activity Thread
-                        </h4>
-                        <div className="space-y-4">
-                            {ticket.replies?.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400 text-sm">
-                                    No messages or replies have been posted to this ticket yet.
-                                </div>
-                            ) : (
-                                ticket.replies.map((reply) => {
-                                    const isITReply = isIT(reply.user);
-                                    return (
-                                        <div
-                                            key={reply.id}
-                                            className={`flex flex-col max-w-[85%] rounded-2xl p-4 text-left shadow-sm ${
-                                                isITReply
-                                                    ? 'mr-auto bg-slate-50 border border-slate-100 text-slate-800 rounded-tl-none'
-                                                    : 'ml-auto bg-indigo-600 text-white rounded-tr-none'
-                                            }`}
-                                        >
-                                            <div className={`flex justify-between items-center gap-4 mb-1.5 border-b pb-1 text-[10px] ${
-                                                isITReply ? 'border-slate-200/55 text-slate-450' : 'border-white/10 text-indigo-100'
-                                            }`}>
-                                                <span className="font-extrabold uppercase tracking-wide">
-                                                    {reply.user?.department_name || 'User'} {isITReply && <span className="ml-1 bg-slate-200/20 text-slate-700 px-1.5 py-0.2 rounded font-semibold text-[9px]">IT Department</span>}
-                                                </span>
-                                                <span className="font-medium">
-                                                    {formatDate(reply.created_at)}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                                                {reply.message}
-                                            </p>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Reply interface */}
-                    {ticket.status !== 'closed' && canReply && (
-                        <form onSubmit={handlePostReply} className="bg-white border border-slate-100 p-6 rounded-2xl space-y-4 text-left shadow-sm">
-                            <h4 className="font-bold text-slate-800 text-sm">
-                                Post message response
+                    {/* ─── Conversation Thread ─── */}
+                    <div className="glass-panel rounded-2xl p-6 flex flex-col shadow-sm relative overflow-hidden animate-slideUp" style={{ animationDelay: '0.05s', background: 'rgba(255, 255, 255, 0.65)' }}>
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-80"></div>
+                        <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-200/60">
+                            <h4 className="text-xs font-black uppercase tracking-[0.15em] text-slate-400 flex items-center gap-2">
+                                <svg className="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                Activity Thread
                             </h4>
-                            <textarea
-                                rows={4}
-                                value={replyMessage}
-                                onChange={(e) => setReplyMessage(e.target.value)}
-                                placeholder="Type details or response message here..."
-                                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 text-slate-850 text-sm focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-200 py-2.5 px-3.5"
-                            />
-                            <div className="flex flex-wrap justify-end items-center gap-4">
-                                <button
-                                    type="submit"
-                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                                >
-                                    Send Reply
-                                </button>
+                            {ticket.replies?.length > 0 && (
+                                <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                                    {ticket.replies.length} Message{ticket.replies.length !== 1 ? 's' : ''}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="space-y-4 min-h-[140px] premium-scrollbar">
+                            {ticket.replies?.length === 0 ? (
+                                <div className="py-10 flex flex-col items-center justify-center space-y-3 text-slate-400">
+                                    <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shadow-inner">
+                                        <svg className="h-8 w-8 text-slate-300 animate-float" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-500">No messages yet</p>
+                                </div>
+                            ) : ticket.replies.map((reply) => {
+                                const isITReply = isIT(reply.user);
+                                return (
+                                    <div
+                                        key={reply.id}
+                                        className={`flex flex-col max-w-[85%] animate-slideUp ${isITReply ? 'mr-auto' : 'ml-auto'}`}
+                                    >
+                                        <div className={`p-4 ${isITReply ? 'bubble-it text-slate-800' : 'bubble-user text-white'}`}>
+                                            <div className={`flex justify-between items-center gap-5 mb-2 pb-1.5 text-[10px] border-b ${isITReply ? 'border-slate-200/80 text-slate-400' : 'border-white/20 text-indigo-50'}`}>
+                                                <span className="font-extrabold uppercase tracking-widest flex items-center gap-1.5">
+                                                    {isITReply ? (
+                                                        <><span className="text-slate-300">●</span> IT Department</>
+                                                    ) : (
+                                                        <><span className="text-indigo-200">●</span> {reply.user?.department_name || 'You'}</>
+                                                    )}
+                                                </span>
+                                                <span className="font-semibold opacity-90">{formatDate(reply.created_at)}</span>
+                                            </div>
+                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{reply.message}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* ─── Reply Form ─── */}
+                    {ticket.status !== 'closed' && canReply && (
+                        <form onSubmit={handlePostReply} className="glass-panel p-1 rounded-2xl relative shadow-sm animate-slideUp" style={{ animationDelay: '0.1s', background: 'rgba(255, 255, 255, 0.8)' }}>
+                            <div className="relative">
+                                <textarea
+                                    rows={4}
+                                    value={replyMessage}
+                                    onChange={(e) => setReplyMessage(e.target.value)}
+                                    placeholder="Type your message or solution here..."
+                                    className="w-full rounded-xl border-0 bg-transparent text-slate-800 text-sm focus:ring-0 transition-all outline-none py-4 px-5 resize-none"
+                                />
+                                <div className="absolute bottom-3 right-3">
+                                    <button
+                                        type="submit"
+                                        disabled={!replyMessage.trim()}
+                                        className="h-10 px-5 gradient-btn text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                        </svg>
+                                        <span>Send Reply</span>
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     )}
